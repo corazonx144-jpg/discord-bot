@@ -5,7 +5,7 @@ import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# تشغيل سيرفر ويب وهمي لترضية منصة Render
+# 1. تشغيل سيرفر ويب وهمي لترضية منصة Render
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -21,9 +21,11 @@ t = threading.Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
+# 2. إعدادات البوت والصلاحيات
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.guilds = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -31,59 +33,78 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"[-] SYSTEM ONLINE: Logged in as {bot.user.name} (ID: {bot.user.id})")
     print("[-] CORE STATUS: SECURE & ENCRYPTED")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM SECURE] | Type !help"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM SECURE] | Type !setup"))
 
-# أمر التأسيس التلقائي للسيرفر (Server Setup Command)
+# 3. أمر التأسيس الشامل (حذف القديم وبناء النظام السيبراني الإنجليزي بالكامل)
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    msg = await ctx.send("```[+] INITIALIZING PROTOCOLS: Building cyber mainframe structure... Please wait.```")
+    msg = await ctx.send("```[!] PURGING SECTORS: Reconstructing the entire mainframe in English...```")
     
     try:
-        # 1. فئة النظام الأساسي
+        # مسح جميع القنوات والفئات القديمة نهائياً
+        for channel in guild.channels:
+            try:
+                await channel.delete()
+            except Exception:
+                pass
+
+        # بناء التصميم السيبراني الإنجليزي بالكامل
+        # Category 1: System Core
         cat1 = await guild.create_category("💻 ── [ 01 ] SYSTEM CORE ── 💻")
-        await guild.create_text_channel("terminal-rules", category=cat1)
+        rules_chan = await guild.create_text_channel("terminal-rules", category=cat1)
         await guild.create_text_channel("system-broadcast", category=cat1)
         await guild.create_text_channel("secure-ticket", category=cat1)
 
-        # 2. فئة الشات والنقاشات
+        # Category 2: Mainframe Chat
         cat2 = await guild.create_category("⚡ ── [ 02 ] MAINFRAME CHAT ── ⚡")
-        await guild.create_text_channel("global-network", category=cat2)
+        global_chan = await guild.create_text_channel("global-network", category=cat2)
         await guild.create_text_channel("bot-terminal", category=cat2)
         await guild.create_text_channel("underground-media", category=cat2)
 
-        # 3. فئة الرومات الصوتية
+        # Category 3: Encrypted Nodes (Voice)
         cat3 = await guild.create_category("🎧 ── [ 03 ] ENCRYPTED NODES ── 🎧")
         await guild.create_voice_channel("[Node-01] Safe Zone", category=cat3)
         await guild.create_voice_channel("[Node-02] Operations Room", category=cat3)
         await guild.create_voice_channel("[Node-03] Secure Alpha", category=cat3)
 
-        # 4. فئة الإدارة
+        # Category 4: Control Room (Staff)
         cat4 = await guild.create_category("🔒 ── [ 04 ] CONTROL ROOM ── 🔒")
         await guild.create_text_channel("surveillance-logs", category=cat4)
         await guild.create_text_channel("admin-console", category=cat4)
 
-        await msg.edit(content="```[✓] SUCCESS: Mainframe structure deployed successfully, Agent.```")
+        # إرسال رسالة القوانين الافتتاحية في روم القوانين
+        rules_embed = discord.Embed(
+            title="🛡️ [ SYSTEM SECURITY PROTOCOLS ] 🛡️",
+            description="Welcome to the elite mainframe network. Read and acknowledge all directives below to maintain secure access.",
+            color=0x00FF66
+        )
+        rules_embed.add_field(name="[01] Respect & Conduct", value="Maintain professional operational discipline across all channels.", inline=False)
+        rules_embed.add_field(name="[02] Security & Privacy", value="Never share confidential tokens, keys, or personal telemetry.", inline=False)
+        rules_embed.add_field(name="[03] Channel Utilization", value="Keep discussions strictly bound to designated sector nodes.", inline=False)
+        rules_embed.set_footer(text="SMARTHUB DEFENSE SYSTEM v4.0.4")
+        await rules_chan.send(embed=rules_embed)
+
     except Exception as e:
-        await ctx.send(f"```[ERROR] Failed to construct matrix: {e}```")
+        print(f"Error during setup: {e}")
 
 @setup.error
 async def setup_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send("```[ERROR] Access Denied: You need Administrator privileges to execute mainframe builds.```", delete_after=5)
+        await ctx.send("```[ERROR] Access Denied: Administrator privileges required.```", delete_after=5)
 
-# ترحيب سيبراني
+# 4. نظام الترحيب السيبراني التلقائي بالأعضاء الجدد
 @bot.event
 async def on_member_join(member):
     for channel in member.guild.text_channels:
-        if "terminal" in channel.name or "welcome" in channel.name or "global" in channel.name:
+        if "global" in channel.name or "terminal" in channel.name:
             embed = discord.Embed(
                 title="⚡ [SYSTEM ACCESS GRANTED] ⚡",
                 description=f"Welcome to the mainframe, <@{member.id}>.\n\n> *\"The matrix has you now... Make sure your firewall is up.\"*",
                 color=0x00FF66
             )
-            embed.add_field(name="[+] Target ID", value=f"`{member.name}`", inline=True)
+            embed.add_field(name="[+] Target ID", value=`{member.name}`", inline=True)
             embed.add_field(name="[+] Security Level", value="`Level 0 - Guest`", inline=True)
             embed.set_thumbnail(url=member.display_avatar.url)
             embed.set_footer(text="SMARTHUB CORE SYSTEM v4.0.4", icon_url=bot.user.display_avatar.url)
@@ -100,7 +121,26 @@ async def on_member_join(member):
             await channel.send(embed=embed, view=view)
             break
 
-# أمر مسح الرسائل
+# 5. نظام الحماية ومراقبة الروابط والسبام (Anti-Spam / Anti-Link Basic)
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    
+    # حماية طرد الروابط الخارجية (باستثناء الإدارة)
+    if "http://" in message.content or "https://www.discord.gg" in message.content or "discord.com/invite" in message.content:
+        if not message.author.guild_permissions.administrator:
+            try:
+                await message.delete()
+                warning = await message.channel.send(f"```[SECURITY WARNING] Unauthorized link transmission detected from <@{message.author.id}>. Packet blocked.```")
+                await warning.delete(delay=5)
+            except Exception:
+                pass
+            return
+
+    await bot.process_commands(message)
+
+# 6. أمر مسح الرسائل السريع
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int = 5):
