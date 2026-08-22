@@ -5,12 +5,12 @@ import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# 1. تشغيل سيرفر ويب لترضية منصة Render
+# 1. تشغيل سيرفر ويب وهمي لترضية منصة Render
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"SmartHub Bot is active and running!")
+        self.wfile.write(b"CyberMainframe Core v5.0 Active.")
 
 def run_web_server():
     port = int(os.environ.get("PORT", 10000))
@@ -31,86 +31,85 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"[-] SYSTEM ONLINE: Logged in as {bot.user.name} (ID: {bot.user.id})")
-    print("[-] CORE STATUS: SECURE & ENCRYPTED")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM SECURE] | Type !setup"))
+    print(f"[-] CYBER CORE ONLINE: {bot.user.name}")
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SECURE TERMINAL] | Type !setup"))
 
-# 3. أمر التأسيس (تنظيف جذري وإزالة أي أثر عربي وبناء النظام السيبراني بالكامل)
+# 3. أمر التأسيس الاحترافي (حذف كامل وبناء الهيكل السيبراني الخالص)
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    msg = await ctx.send("```[!] PURGING SECTORS: Erasing all legacy/arabic channels and rebuilding in pure English...```")
+    await ctx.send("```prolog\n[!] INITIATING SYSTEM PURGE: Erasing legacy sectors and deploying Cyber-Mainframe v5.0...\n```")
     
     try:
-        # مسح شامل وإجباري لجميع القنوات والفئات الموجودة في السيرفر دون استثناء
+        # حذف جميع الرومات والفئات القديمة دون استثناء
         for channel in list(guild.channels):
             try:
                 await channel.delete()
             except Exception:
                 pass
 
-        # بناء التصميم السيبراني الإنجليزي الخالص 100%
-        cat1 = await guild.create_category("💻 ── [ 01 ] SYSTEM CORE ── 💻")
-        rules_chan = await guild.create_text_channel("terminal-rules", category=cat1)
-        await guild.create_text_channel("system-broadcast", category=cat1)
-        await guild.create_text_channel("secure-ticket", category=cat1)
+        # بناء الهيكل الاحترافي الجديد بالكامل (إنجليزي سيبراني بحت)
+        cat1 = await guild.create_category("🛡️ ── [ SECTOR 01 ] SYSTEM ROOT ── 🛡️")
+        rules_chan = await guild.create_text_channel("🔒--security-directives", category=cat1)
+        await guild.create_text_channel("📡--mainframe-broadcast", category=cat1)
+        await guild.create_text_channel("🎫--secure-ticket-desk", category=cat1)
 
-        cat2 = await guild.create_category("⚡ ── [ 02 ] MAINFRAME CHAT ── ⚡")
-        welcome_chan = await guild.create_text_channel("welcome-protocols", category=cat2)
-        await guild.create_text_channel("global-network", category=cat2)
-        await guild.create_text_channel("bot-terminal", category=cat2)
-        await guild.create_text_channel("underground-media", category=cat2)
+        cat2 = await guild.create_category("⚡ ── [ SECTOR 02 ] MAINFRAME CHAT ── ⚡")
+        welcome_chan = await guild.create_text_channel(" [+]--welcome-terminal", category=cat2)
+        await guild.create_text_channel("🌐--global-network", category=cat2)
+        await guild.create_text_channel("💻--bot-console", category=cat2)
+        await guild.create_text_channel("📂--underground-media", category=cat2)
 
-        cat3 = await guild.create_category("🎧 ── [ 03 ] ENCRYPTED NODES ── 🎧")
-        await guild.create_voice_channel("[Node-01] Safe Zone", category=cat3)
-        await guild.create_voice_channel("[Node-02] Operations Room", category=cat3)
-        await guild.create_voice_channel("[Node-03] Secure Alpha", category=cat3)
+        cat3 = await guild.create_category("🎧 ── [ SECTOR 03 ] ENCRYPTED NODES ── 🎧")
+        await guild.create_voice_channel("🔒 [Node-01] Secure Alpha", category=cat3)
+        await guild.create_voice_channel("🔒 [Node-02] Operations Room", category=cat3)
+        await guild.create_voice_channel("🔒 [Node-03] Ghost Protocol", category=cat3)
 
-        cat4 = await guild.create_category("🔒 ── [ 04 ] CONTROL ROOM ── 🔒")
-        await guild.create_text_channel("surveillance-logs", category=cat4)
-        await guild.create_text_channel("admin-console", category=cat4)
+        cat4 = await guild.create_category("👁️ ── [ SECTOR 04 ] CONTROL & LOGS ── 👁️")
+        await guild.create_text_channel("⚠️--surveillance-logs", category=cat4)
+        await guild.create_text_channel("⚙️--admin-terminal", category=cat4)
 
-        # إرسال لوحة القوانين السيبرانية في روم القوانين
+        # رسالة القوانين السيبرانية الاحترافية
         rules_embed = discord.Embed(
-            title="🛡️ [ SYSTEM SECURITY PROTOCOLS ] 🛡️",
-            description="Welcome to the elite mainframe network. Read and acknowledge all directives below to maintain secure access.",
+            title="⚡ [ SYSTEM SECURITY DIRECTIVES v5.0 ] ⚡",
+            description="```ini\n[ ACCESS LEVEL: RESTRICTED ]\nWelcome to the elite mainframe network. Comply with all directives below to prevent system isolation.\n```",
             color=0x00FF66
         )
-        rules_embed.add_field(name="[01] Respect & Conduct", value="Maintain professional operational discipline across all channels.", inline=False)
-        rules_embed.add_field(name="[02] Security & Privacy", value="Never share confidential tokens, keys, or personal telemetry.", inline=False)
-        rules_embed.add_field(name="[03] Channel Utilization", value="Keep discussions strictly bound to designated sector nodes.", inline=False)
-        rules_embed.set_footer(text="SMARTHUB DEFENSE SYSTEM v4.0.4")
+        rules_embed.add_field(name="[01] Operational Discipline", value="> Maintain strict professional conduct across all terminal sectors.", inline=False)
+        rules_embed.add_field(name="[02] Data Privacy & Encryption", value="> Never leak authentication tokens, private keys, or personal telemetry.", inline=False)
+        rules_embed.add_field(name="[03] Sector Routing", value="> Keep all transmissions bound to their respective designated channels.", inline=False)
+        rules_embed.set_footer(text="MAINFRAME SECURITY DEFENSE | SECURE ENCLAVE")
         await rules_chan.send(embed=rules_embed)
 
     except Exception as e:
-        print(f"Error during setup: {e}")
+        print(f"Setup Error: {e}")
 
 @setup.error
 async def setup_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send("```[ERROR] Access Denied: Administrator privileges required.```", delete_after=5)
+        await ctx.send("```css\n[ERROR] Access Denied: Administrator clearance required.\n```", delete_after=5)
 
-# 4. نظام الترحيب السيبراني التلقائي بالأعضاء الجدد
+# 4. نظام الترحيب السيبراني الهكرز الاحترافي (Matrix Style)
 @bot.event
 async def on_member_join(member):
     for channel in member.guild.text_channels:
         if "welcome" in channel.name:
             embed = discord.Embed(
-                title="⚡ [SYSTEM ACCESS GRANTED] ⚡",
-                description=f"Welcome to the mainframe, <@{member.id}>.\n\n> *\"The matrix has you now... Make sure your firewall is up.\"*",
+                title="🔓 [ NEW AGENT CONNECTION DETECTED ] 🔓",
+                description=f"```css\nTarget Connected: {member.name}\nIP Routing: Secure Proxy\nStatus: Unverified Node\n```\n> *\"The matrix has absorbed another signal... Ensure your firewall is active, agent <@{member.id}>.\"*",
                 color=0x00FF66
             )
-            embed.add_field(name="[+] Target ID", value=f"`{member.name}`", inline=True)
-            embed.add_field(name="[+] Security Level", value="`Level 0 - Guest`", inline=True)
+            embed.add_field(name="[+] Target UID", value=f"`{member.id}`", inline=True)
+            embed.add_field(name="[+] Security Clearance", value="`Level 0 - Guest`", inline=True)
             embed.set_thumbnail(url=member.display_avatar.url)
-            embed.set_footer(text="SMARTHUB CORE SYSTEM v4.0.4", icon_url=bot.user.display_avatar.url)
+            embed.set_footer(text="CYBERMAINFRAME CORE V5.0 // AUTHENTICATED", icon_url=bot.user.display_avatar.url)
             
             view = View()
-            button = Button(label="Acknowledge Protocols", style=discord.ButtonStyle.green, emoji="🛡️")
+            button = Button(label="Acknowledge Protocols & Sync", style=discord.ButtonStyle.green, emoji="🛡️")
             
             async def button_callback(interaction):
-                await interaction.response.send_message(f"Access acknowledged by <@{interaction.user.id}>. Welcome aboard, agent.", ephemeral=True)
+                await interaction.response.send_message(f"```prolog\n[SUCCESS] Agent <@{interaction.user.id}> has successfully synchronized with the network mainframe.\n```", ephemeral=True)
                 
             button.callback = button_callback
             view.add_item(button)
@@ -118,17 +117,17 @@ async def on_member_join(member):
             await channel.send(embed=embed, view=view)
             break
 
-# 5. نظام الحماية الذكي ضد الروابط الخارجية (Anti-Link)
+# 5. نظام الحماية ضد الروابط والسبام
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
     
-    if "http://" in message.content or "https://www.discord.gg" in message.content or "discord.com/invite" in message.content:
+    if "http://" in message.content or "https://" in message.content or "discord.gg" in message.content:
         if not message.author.guild_permissions.administrator:
             try:
                 await message.delete()
-                warning = await message.channel.send(f"```[SECURITY WARNING] Unauthorized link transmission detected from <@{message.author.id}>. Packet blocked.```")
+                warning = await message.channel.send(f"```css\n[SECURITY BREACH BLOCKED] Unauthorized transmission link intercepted from <@{message.author.id}>. Packet dropped.\n```")
                 await warning.delete(delay=5)
             except Exception:
                 pass
@@ -136,12 +135,12 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-# 6. أمر مسح الرسائل السريع
+# 6. أمر التنظيف السريع
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int = 5):
     await ctx.channel.purge(limit=amount + 1)
-    msg = await ctx.send(f"```[SYSTEM] purged {amount} packets from the sector.```")
+    msg = await ctx.send(f"```prolog\n[SYSTEM] Purged {amount} encrypted packets from sector buffer.\n```")
     await msg.delete(delay=3)
 
 TOKEN = os.getenv("DISCORD_TOKEN")
