@@ -2,7 +2,27 @@ import discord
 from discord.ext import commands
 from discord.ui import Button, View
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
+# تشغيل سيرفر ويب وهمي في الخلفية لترضية منصة Render وتجنب أخطاء البورتات
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"SmartHub Bot is active and running!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
+    server.serve_forever()
+
+# بدء السيرفر الوهمي في خيط منفصل (Background Thread)
+t = threading.Thread(target=run_web_server)
+t.daemon = True
+t.start()
+
+# إعدادات بوت ديسكورد
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
