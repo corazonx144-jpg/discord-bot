@@ -51,30 +51,26 @@ async def setup(ctx):
                 pass
 
         # بناء التصميم السيبراني الإنجليزي بالكامل
-        # Category 1: System Core
         cat1 = await guild.create_category("💻 ── [ 01 ] SYSTEM CORE ── 💻")
         rules_chan = await guild.create_text_channel("terminal-rules", category=cat1)
         await guild.create_text_channel("system-broadcast", category=cat1)
         await guild.create_text_channel("secure-ticket", category=cat1)
 
-        # Category 2: Mainframe Chat
         cat2 = await guild.create_category("⚡ ── [ 02 ] MAINFRAME CHAT ── ⚡")
         global_chan = await guild.create_text_channel("global-network", category=cat2)
         await guild.create_text_channel("bot-terminal", category=cat2)
         await guild.create_text_channel("underground-media", category=cat2)
 
-        # Category 3: Encrypted Nodes (Voice)
         cat3 = await guild.create_category("🎧 ── [ 03 ] ENCRYPTED NODES ── 🎧")
         await guild.create_voice_channel("[Node-01] Safe Zone", category=cat3)
         await guild.create_voice_channel("[Node-02] Operations Room", category=cat3)
         await guild.create_voice_channel("[Node-03] Secure Alpha", category=cat3)
 
-        # Category 4: Control Room (Staff)
         cat4 = await guild.create_category("🔒 ── [ 04 ] CONTROL ROOM ── 🔒")
         await guild.create_text_channel("surveillance-logs", category=cat4)
         await guild.create_text_channel("admin-console", category=cat4)
 
-        # إرسال رسالة القوانين الافتتاحية في روم القوانين
+        # إرسال القوانين في الروم المخصص
         rules_embed = discord.Embed(
             title="🛡️ [ SYSTEM SECURITY PROTOCOLS ] 🛡️",
             description="Welcome to the elite mainframe network. Read and acknowledge all directives below to maintain secure access.",
@@ -104,7 +100,7 @@ async def on_member_join(member):
                 description=f"Welcome to the mainframe, <@{member.id}>.\n\n> *\"The matrix has you now... Make sure your firewall is up.\"*",
                 color=0x00FF66
             )
-            embed.add_field(name="[+] Target ID", value=`{member.name}`", inline=True)
+            embed.add_field(name="[+] Target ID", value=f"`{member.name}`", inline=True)
             embed.add_field(name="[+] Security Level", value="`Level 0 - Guest`", inline=True)
             embed.set_thumbnail(url=member.display_avatar.url)
             embed.set_footer(text="SMARTHUB CORE SYSTEM v4.0.4", icon_url=bot.user.display_avatar.url)
@@ -121,13 +117,12 @@ async def on_member_join(member):
             await channel.send(embed=embed, view=view)
             break
 
-# 5. نظام الحماية ومراقبة الروابط والسبام (Anti-Spam / Anti-Link Basic)
+# 5. نظام الحماية ومراقبة الروابط (Anti-Link)
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
     
-    # حماية طرد الروابط الخارجية (باستثناء الإدارة)
     if "http://" in message.content or "https://www.discord.gg" in message.content or "discord.com/invite" in message.content:
         if not message.author.guild_permissions.administrator:
             try:
@@ -140,7 +135,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-# 6. أمر مسح الرسائل السريع
+# 6. أمر مسح الرسائل
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int = 5):
