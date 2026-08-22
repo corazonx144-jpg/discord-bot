@@ -5,7 +5,7 @@ import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# 1. تشغيل سيرفر ويب وهمي لترضية منصة Render
+# 1. تشغيل سيرفر ويب لترضية منصة Render
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -21,7 +21,7 @@ t = threading.Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات البوت والصلاحيات
+# 2. إعدادات البوت
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -35,29 +35,30 @@ async def on_ready():
     print("[-] CORE STATUS: SECURE & ENCRYPTED")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM SECURE] | Type !setup"))
 
-# 3. أمر التأسيس الشامل (حذف القديم وبناء النظام السيبراني الإنجليزي بالكامل)
+# 3. أمر التأسيس (تنظيف جذري وإزالة أي أثر عربي وبناء النظام السيبراني بالكامل)
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    msg = await ctx.send("```[!] PURGING SECTORS: Reconstructing the entire mainframe in English...```")
+    msg = await ctx.send("```[!] PURGING SECTORS: Erasing all legacy/arabic channels and rebuilding in pure English...```")
     
     try:
-        # مسح جميع القنوات والفئات القديمة نهائياً
-        for channel in guild.channels:
+        # مسح شامل وإجباري لجميع القنوات والفئات الموجودة في السيرفر دون استثناء
+        for channel in list(guild.channels):
             try:
                 await channel.delete()
             except Exception:
                 pass
 
-        # بناء التصميم السيبراني الإنجليزي بالكامل
+        # بناء التصميم السيبراني الإنجليزي الخالص 100%
         cat1 = await guild.create_category("💻 ── [ 01 ] SYSTEM CORE ── 💻")
         rules_chan = await guild.create_text_channel("terminal-rules", category=cat1)
         await guild.create_text_channel("system-broadcast", category=cat1)
         await guild.create_text_channel("secure-ticket", category=cat1)
 
         cat2 = await guild.create_category("⚡ ── [ 02 ] MAINFRAME CHAT ── ⚡")
-        global_chan = await guild.create_text_channel("global-network", category=cat2)
+        welcome_chan = await guild.create_text_channel("welcome-protocols", category=cat2)
+        await guild.create_text_channel("global-network", category=cat2)
         await guild.create_text_channel("bot-terminal", category=cat2)
         await guild.create_text_channel("underground-media", category=cat2)
 
@@ -70,7 +71,7 @@ async def setup(ctx):
         await guild.create_text_channel("surveillance-logs", category=cat4)
         await guild.create_text_channel("admin-console", category=cat4)
 
-        # إرسال القوانين في الروم المخصص
+        # إرسال لوحة القوانين السيبرانية في روم القوانين
         rules_embed = discord.Embed(
             title="🛡️ [ SYSTEM SECURITY PROTOCOLS ] 🛡️",
             description="Welcome to the elite mainframe network. Read and acknowledge all directives below to maintain secure access.",
@@ -94,7 +95,7 @@ async def setup_error(ctx, error):
 @bot.event
 async def on_member_join(member):
     for channel in member.guild.text_channels:
-        if "global" in channel.name or "terminal" in channel.name:
+        if "welcome" in channel.name:
             embed = discord.Embed(
                 title="⚡ [SYSTEM ACCESS GRANTED] ⚡",
                 description=f"Welcome to the mainframe, <@{member.id}>.\n\n> *\"The matrix has you now... Make sure your firewall is up.\"*",
@@ -117,7 +118,7 @@ async def on_member_join(member):
             await channel.send(embed=embed, view=view)
             break
 
-# 5. نظام الحماية ومراقبة الروابط (Anti-Link)
+# 5. نظام الحماية الذكي ضد الروابط الخارجية (Anti-Link)
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -135,7 +136,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-# 6. أمر مسح الرسائل
+# 6. أمر مسح الرسائل السريع
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int = 5):
