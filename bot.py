@@ -9,7 +9,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberKernel Enterprise Core v14.0 Active.")
+        self.wfile.write(b"CyberKernel Enterprise Core v15.0 Active.")
 
 def run_web_server():
     port = int(os.environ.get("PORT", 10000))
@@ -30,13 +30,13 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"[-] CYBERKERNEL CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v14.0] | Type !setup"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v15.0] | Type !setup"))
 
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    status_msg = await ctx.send("```prolog\n[INIT] Deploying CyberKernel Enterprise Architecture v14.0...\n[+] Purging old channels, categories, and roles...\n```")
+    status_msg = await ctx.send("```prolog\n[INIT] Deploying CyberKernel Enterprise Architecture v15.0...\n[+] Purging old channels, categories, and roles...\n```")
     
     try:
         # 1. حذف شامل لجميع القنوات والفئات القديمة
@@ -46,13 +46,13 @@ async def setup(ctx):
             except Exception:
                 pass
 
-        # 2. حذف جميع الرتب القديمة (باستثناء الرتبة الافتراضية @everyone، رتب البوتات، ورتبة صاحب السيرفر)
+        # 2. حذف جميع الرتب القديمة (باستثناء رتب البوتات، @everyone، ورتبة البوت نفسه)
         for role in list(guild.roles):
-            if role != guild.default_role and not role.managed and role < guild.me.top_role:
+            if role != guild.default_role and not role.managed and role != guild.me.top_role and role.position < guild.me.top_role.position:
                 try:
                     await role.delete()
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Could not delete role {role.name}: {e}")
 
         # 3. إنشاء الرتب السيبرانية الجديدة والاحترافية من الصفر
         admin_role = await guild.create_role(name="👑 ── [ ROOT_ADMIN ] ── 👑", color=discord.Color.from_rgb(235, 50, 50), permissions=discord.Permissions(administrator=True))
@@ -109,7 +109,7 @@ async def setup(ctx):
         rules_embed.add_field(name="01. Professional Discipline", value="Maintain absolute tactical discipline and professional conduct across all terminal channels.", inline=False)
         rules_embed.add_field(name="02. Zero-Leak Policy", value="Exposing authentication tokens, keys, or internal telemetry results in immediate node termination.", inline=False)
         rules_embed.add_field(name="03. Sector Routing", value="Keep all communications strictly bound to their designated operational channels.", inline=False)
-        rules_embed.set_footer(text="CYBERKERNEL DEFENSE SYSTEM v14.0")
+        rules_embed.set_footer(text="CYBERKERNEL DEFENSE SYSTEM v15.0")
         await rules_chan.send(embed=rules_embed)
 
         # 7. رسالة شرح الرتب الرسمية
@@ -125,7 +125,7 @@ async def setup(ctx):
         roles_embed.set_footer(text="SYSTEM SECURITY ARCHITECTURE // CLEARANCE GUIDE")
         await roles_chan.send(embed=roles_embed)
 
-        await status_msg.edit(content="```prolog\n[SUCCESS] CyberKernel Enterprise Architecture v14.0 deployed successfully. Old roles & channels purged.\n```")
+        await status_msg.edit(content="```prolog\n[SUCCESS] CyberKernel Enterprise Architecture v15.0 deployed successfully. Old roles & channels purged.\n```")
 
     except Exception as e:
         print(f"Setup Error: {e}")
