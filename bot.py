@@ -9,7 +9,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberKernel Enterprise Core v11.0 Active.")
+        self.wfile.write(b"CyberKernel Enterprise Core v12.0 Active.")
 
 def run_web_server():
     port = int(os.environ.get("PORT", 10000))
@@ -30,13 +30,13 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"[-] CYBERKERNEL CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v11.0] | Type !setup"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v12.0] | Type !setup"))
 
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    status_msg = await ctx.send("```prolog\n[INIT] Deploying CyberKernel Enterprise Architecture v11.0...\n[+] Overriding sectors & injecting clean terminal symbols...\n```")
+    status_msg = await ctx.send("```prolog\n[INIT] Deploying CyberKernel Enterprise Architecture v12.0...\n[+] Overriding sectors & injecting clean layouts...\n```")
     
     try:
         # 1. حذف شامل لجميع القنوات والفئات القديمة
@@ -105,30 +105,30 @@ async def setup(ctx):
 
         # 5. رسالة القوانين الرسمية
         rules_embed = discord.Embed(
-            title="⚡ [ SYSTEM SECURITY PROTOCOLS // CORE DIRECTIVES ] ⚡",
-            description="```ini\n[ ACCESS LEVEL: RESTRICTED // KERNEL ENCLAVE ]\nWelcome to the enterprise core network. Strict adherence to the following security directives is mandatory for all active nodes.\n```",
+            title="SYSTEM SECURITY PROTOCOLS // CORE DIRECTIVES",
+            description="Welcome to the enterprise core network. Strict adherence to the following security directives is mandatory for all active nodes.",
             color=0x00E676
         )
-        rules_embed.add_field(name="[01] PROFESSIONAL DISCIPLINE", value="> Maintain absolute tactical discipline and professional conduct across all terminal channels.", inline=False)
-        rules_embed.add_field(name="[02] ZERO-LEAK POLICY", value="> Exposing authentication tokens, keys, or internal telemetry results in immediate node termination.", inline=False)
-        rules_embed.add_field(name="[03] SECTOR ROUTING", value="> Keep all communications strictly bound to their designated operational channels.", inline=False)
-        rules_embed.set_footer(text="CYBERKERNEL DEFENSE SYSTEM v11.0")
+        rules_embed.add_field(name="01. Professional Discipline", value="Maintain absolute tactical discipline and professional conduct across all terminal channels.", inline=False)
+        rules_embed.add_field(name="02. Zero-Leak Policy", value="Exposing authentication tokens, keys, or internal telemetry results in immediate node termination.", inline=False)
+        rules_embed.add_field(name="03. Sector Routing", value="Keep all communications strictly bound to their designated operational channels.", inline=False)
+        rules_embed.set_footer(text="CYBERKERNEL DEFENSE SYSTEM v12.0")
         await rules_chan.send(embed=rules_embed)
 
         # 6. رسالة شرح الرتب الرسمية
         roles_embed = discord.Embed(
-            title="🛡️ [ ENTERPRISE ROLE HIERARCHY & CLEARANCE ] 🛡️",
-            description="```yaml\nDetailed breakdown of security clearances and operational roles established within the system network:\n```",
+            title="ENTERPRISE ROLE HIERARCHY & CLEARANCE",
+            description="Detailed breakdown of security clearances and operational roles established within the system network:",
             color=0x00E676
         )
-        roles_embed.add_field(name="👑 ── [ ROOT_ADMIN ]", value="> **Supreme Control:** Possesses full administrative clearance over infrastructure, role provisioning, and core system configurations.", inline=False)
-        roles_embed.add_field(name="🛡️ ── [ SECURITY_OFFICER ]", value="> **Operations & Moderation:** Authorized to monitor network traffic, enforce disciplinary protocols, and manage channel integrity.", inline=False)
-        roles_embed.add_field(name="⚡ ── [ ELITE_AGENT ]", value="> **Verified Operative:** Granted to trusted active members with full access to global chat channels, command shell, and encrypted nodes.", inline=False)
-        roles_embed.add_field(name="👤 ── [ GUEST_NODE ]", value="> **Unverified Guest:** Default clearance assigned upon initial connection. Limited to public communication channels.", inline=False)
+        roles_embed.add_field(name="👑 ── [ ROOT_ADMIN ]", value="Supreme Control: Possesses full administrative clearance over infrastructure, role provisioning, and core system configurations.", inline=False)
+        roles_embed.add_field(name="🛡️ ── [ SECURITY_OFFICER ]", value="Operations & Moderation: Authorized to monitor network traffic, enforce disciplinary protocols, and manage channel integrity.", inline=False)
+        roles_embed.add_field(name="⚡ ── [ ELITE_AGENT ]", value="Verified Operative: Granted to trusted active members with full access to global chat channels, command shell, and encrypted nodes.", inline=False)
+        roles_embed.add_field(name="👤 ── [ GUEST_NODE ]", value="Unverified Guest: Default clearance assigned upon initial connection. Limited to public communication channels.", inline=False)
         roles_embed.set_footer(text="SYSTEM SECURITY ARCHITECTURE // CLEARANCE GUIDE")
         await roles_chan.send(embed=roles_embed)
 
-        await status_msg.edit(content="```prolog\n[SUCCESS] CyberKernel Enterprise Architecture v11.0 deployed successfully. Clean terminal layout synchronized.\n```")
+        await status_msg.edit(content="```prolog\n[SUCCESS] CyberKernel Enterprise Architecture v12.0 deployed successfully. Clean layout synchronized.\n```")
 
     except Exception as e:
         print(f"Setup Error: {e}")
@@ -139,32 +139,25 @@ async def setup_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send("```css\n[ERROR] Access Denied: Administrator clearance required to initialize setup.\n```", delete_after=5)
 
-# 7. ترحيب بروفيشنال بنظام الكود النظيف (بدون كلمة ماتريكس نهائياً)
+# 7. نظام ترحيب احترافي ونظيف تماماً (بدون بوكسات الـ Code-Block المزعجة)
 @bot.event
 async def on_member_join(member):
     for channel in member.guild.text_channels:
         if "connection" in channel.name or "welcome" in channel.name:
-            welcome_text = (
-                f"```ini\n"
-                f"[SECURE HANDSHAKE ESTABLISHED]\n"
-                f"--------------------------------------------------\n"
-                f"TARGET AGENT     : {member.name}\n"
-                f"TARGET UID       : {member.id}\n"
-                f"GATEWAY PROXY    : TLS-1.3 Encrypted Session\n"
-                f"ASSIGNED ROLE    : 👤 ── [ GUEST_NODE ]\n"
-                f"SYSTEM STATUS    : Active Connection\n"
-                f"--------------------------------------------------\n"
-                f"```\n"
-                f"> *\"New signal detected on the network. Welcome aboard, agent <@{member.id}>. Review `🛡️・role-hierarchy-guide` and `📜・security-directives` to synchronize with protocol.\"*"
-            )
-            
             embed = discord.Embed(
-                title="⚡ [ SYSTEM KERNEL // ACCESS GRANTED ] ⚡",
-                description=welcome_text,
+                title="SECURE HANDSHAKE ESTABLISHED",
+                description=f"New signal detected on the network. Welcome aboard, agent <@{member.id}>.",
                 color=0x00E676
             )
+            embed.add_field(name="Target Agent", value=f"`{member.name}`", inline=True)
+            embed.add_field(name="Target UID", value=f"`{member.id}`", inline=True)
+            embed.add_field(name="Gateway Proxy", value="`TLS-1.3 Encrypted`", inline=True)
+            embed.add_field(name="Assigned Role", value="`👤 ── [ GUEST_NODE ]`", inline=True)
+            embed.add_field(name="System Status", value="`Active Connection`", inline=True)
+            embed.add_field(name="Protocol Action", value="Review `🛡️・role-hierarchy-guide` and `📜・security-directives` to synchronize.", inline=False)
+            
             embed.set_thumbnail(url=member.display_avatar.url)
-            embed.set_footer(text="CYBERKERNEL ENTERPRISE // v11.0", icon_url=bot.user.display_avatar.url)
+            embed.set_footer(text="CYBERKERNEL ENTERPRISE // v12.0", icon_url=bot.user.display_avatar.url)
             
             view = View()
             button = Button(label="Acknowledge Protocol", style=discord.ButtonStyle.green, emoji="🛡️")
