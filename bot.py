@@ -10,7 +10,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberMainframe Core v6.0 Active.")
+        self.wfile.write(b"CyberMainframe Core v7.0 Active.")
 
 def run_web_server():
     port = int(os.environ.get("PORT", 10000))
@@ -21,35 +21,35 @@ t = threading.Thread(target=run_web_server)
 t.daemon = True
 t.start()
 
-# 2. إعدادات البوت
+# 2. إعدادات البوت (تم تغيير البادئة إلى . لتجنب التعارض مع البوتات الأخرى)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.guilds = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix=".", intents=intents)
 
 @bot.event
 async def on_ready():
     print(f"[-] CYBER CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[CYBERMAINFRAME v6.0] | Type !setup"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[CYBERMAINFRAME v7.0] | Type .setup"))
 
-# 3. أمر التأسيس القسري (حذف نهائي لكل القنوات العالقة وبناء الهيكل السيبراني الخالص)
+# 3. أمر التأسيس القسري المطور (حذف جذري إجباري لكل رومات السيرفر)
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    msg = await ctx.send("```ini\n[!] FORCE PURGE ENGAGED: Obliterating all stubborn channels and deploying Cyber-Mainframe v6.0...\n```")
+    await ctx.send("```ini\n[!] OVERRIDE PURGE: Obliterating all legacy channels and deploying Cyber-Mainframe v7.0...\n```")
     
     try:
-        # حذف قسري لكل القنوات والفئات مهما كانت حالتها أو نوعها
+        # حذف قسري لكل القنوات والفئات والفويس دون استثناء
         for channel in list(guild.channels):
             try:
                 await channel.delete()
-            except Exception as e:
-                print(f"Failed to delete channel {channel.name}: {e}")
+            except Exception:
+                pass
 
-        # بناء الهيكل السيبراني الاحترافي الخالي من أي عربي بالكامل
+        # بناء الهيكل السيبراني الإنجليزي الخالص 100%
         cat1 = await guild.create_category("🛡️ ── [ SECTOR 01 ] SYSTEM ROOT ── 🛡️")
         rules_chan = await guild.create_text_channel("security-directives", category=cat1)
         await guild.create_text_channel("mainframe-broadcast", category=cat1)
@@ -79,7 +79,7 @@ async def setup(ctx):
         rules_embed.add_field(name="[01] Operational Discipline", value="> Maintain strict tactical silence and professional conduct across sectors.", inline=False)
         rules_embed.add_field(name="[02] Encryption & Telemetry", value="> Leaking access keys, authentication tokens, or private data is strictly prohibited.", inline=False)
         rules_embed.add_field(name="[03] Sector Routing", value="> Keep all communications bound to their designated operational channels.", inline=False)
-        rules_embed.set_footer(text="CYBER DEFENSE SYSTEM v6.0 // SECURE ENCLAVE")
+        rules_embed.set_footer(text="CYBER DEFENSE SYSTEM v7.0 // SECURE ENCLAVE")
         await rules_chan.send(embed=rules_embed)
 
     except Exception as e:
