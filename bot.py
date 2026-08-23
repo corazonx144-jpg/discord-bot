@@ -131,6 +131,28 @@ async def ensure_panel(channel: discord.TextChannel, panel_key: str, embed: disc
     await bot.database.save_panel(channel.guild.id, panel_key, channel.id, message.id)
 
 
+def arrival_terminal_embed(guild: discord.Guild) -> discord.Embed:
+    embed = discord.Embed(
+        title="NEXUS // ARRIVAL TERMINAL",
+        description=(
+            "```ansi\n"
+            "\u001b[1;36m╔══════════════════════════════════════╗\u001b[0m\n"
+            "\u001b[1;36m║     N E X U S   I N I T I A T E      ║\u001b[0m\n"
+            "\u001b[1;36m╚══════════════════════════════════════╝\u001b[0m\n"
+            "\u001b[1;32m[ OK ]\u001b[0m  secure gateway online\n"
+            "\u001b[1;33m[ !  ]\u001b[0m  clearance: pending approval\n"
+            "\u001b[1;36m[ >> ]\u001b[0m  next: open #🛡️-verify-access\n"
+            "```"
+        ),
+        colour=0x22D3EE,
+    )
+    embed.add_field(name="01 · Request access", value="Submit your identity request. No role is granted automatically.", inline=False)
+    embed.add_field(name="02 · Await clearance", value="An administrator reviews the request in the private control queue.", inline=False)
+    embed.set_footer(text=f"{guild.name} • secure access protocol")
+    if bot.user: embed.set_thumbnail(url=bot.user.display_avatar.url)
+    return embed
+
+
 @bot.event
 async def on_ready() -> None:
     log.info("Online as %s (%s)", bot.user, bot.user.id if bot.user else "unknown")
@@ -193,11 +215,18 @@ async def setup(interaction: discord.Interaction) -> None:
     await ensure_category(guild, "📁 ─ SECTOR 04 │ INTELLIGENCE ARCHIVE", protected)
     support = await ensure_category(guild, "🎫 ─ SUPPORT NODE", protected)
     await ensure_text(support, "📋-support-protocol")
-    control = await ensure_category(guild, "👁️ ─ SECTOR 05 │ CONTROL & LOGS", {guild.default_role: discord.PermissionOverwrite(view_channel=False), me: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True)})
+    control_overwrites = {
+        guild.default_role: discord.PermissionOverwrite(view_channel=False),
+        me: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True, read_message_history=True),
+    }
+    # The actual server owner always sees the approval queue, even without an Admin role.
+    if guild.owner:
+        control_overwrites[guild.owner] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
+    control = await ensure_category(guild, "👁️ ─ SECTOR 05 │ CONTROL & LOGS", control_overwrites)
     await ensure_text(control, "📊-surveillance-logs")
     await ensure_text(control, "🔐-approval-queue")
 
-    await ensure_panel(arrival, "arrival", panel_embed("NEXUS // ARRIVAL TERMINAL", "`SYSTEM READY`\n\nNew arrivals receive no access automatically. Open **🛡️-verify-access** and submit an approval request."), discord.ui.View())
+    await ensure_panel(arrival, "arrival", arrival_terminal_embed(guild), discord.ui.View())
     await ensure_panel(verify, "verification", panel_embed("Identity gateway", "Submit an access request. An administrator must approve it before the protected network unlocks."), VerificationView(bot.database))
     await ensure_panel(roles, "roles", panel_embed("Clearance selector", "Choose optional roles. Press again to remove a role."), RoleView())
     await ensure_panel(tickets, "tickets", panel_embed("Support terminal", "Open one private, persistent support ticket."), TicketView(bot.database))
