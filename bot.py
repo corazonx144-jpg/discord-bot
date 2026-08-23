@@ -2,13 +2,14 @@ import discord
 from discord.ext import commands
 import os
 import threading
+import asyncio
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberKernel Enterprise Core v19.3 Active.")
+        self.wfile.write(b"CyberKernel Enterprise Core v19.5 Active.")
         
     def do_HEAD(self):
         self.send_response(200)
@@ -27,29 +28,81 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.guilds = True
+intents.voice_states = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
     print(f"[-] CYBERKERNEL CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.3] | Interactive UI Active"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.5] | Smart Dropdowns Active"))
 
-# --- نافذة منبثقة (Modal) لإنشاء الروم الكتابي ---
-class CreateTextModal(discord.ui.Modal, title="Initialize Text Node"):
-    channel_name = discord.ui.TextInput(
-        label="Node Designation (Name)",
-        placeholder="e.g., tactical-ops",
-        required=True,
-        max_length=50
-    )
-    visibility = discord.ui.TextInput(
-        label="Visibility (public / hidden)",
-        placeholder="Type 'hidden' or 'public'",
-        default="public",
-        required=True,
-        max_length=10
-    )
+# --- دالة مؤقت الحذف التلقائي للرومات بناءً على الوقت المحدد ---
+async def schedule_channel_deletion(channel, hours):
+    await asyncio.sleep(hours * 3600)
+    try:
+        await channel.delete()
+    except Exception:
+        pass
+
+# --- قوائم اختيار تفاعلية (Select Menus) لخصائص الروم ---
+class RoomConfigSelect(discord.ui.Select):
+    def __init__(self, channel_type: str):
+        self.channel_type = channel_type
+        options = [
+            discord.SelectOption(label="Public (Visible to All)", description="Standard public node accessible by everyone", emoji="🌐", value="public"),
+            discord.SelectOption(label="Hidden (Private / Locked)", description="Encrypted private node restricted access", emoji="🔒", value="hidden")
+        ]
+        super().__init__(placeholder="Select Node Security Visibility...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        visibility = self.values[0]
+        # الانتقال للخطوة التالية وهي اختيار المؤقت الزمني
+        view = TimerConfigView(self.channel_type, visibility)
+        await interaction.response.edit_message(content=f"```prolog\n[CONFIG] Visibility set to: {visibility.upper()}\n[+] Now select the auto-destruct timer duration:\n```", view=view)
+
+class RoomConfigView(discord.ui.View):
+    def __init__(self, channel_type: str, visibility: str):
+        super().__init__(timeout=180)
+        self.add_item(RoomConfigSelect(channel_type))
+
+class TimerSelect(discord.ui.Select):
+    def __init__(self, channel_type: str, visibility: str):
+        self.channel_type = channel_type
+        self.visibility = visibility
+        options = [
+            discord.SelectOption(label="1 Hour", description="Auto-destruct after 1 hour", emoji="⏳", value="1"),
+            discord.SelectOption(label="6 Hours", description="Auto-destruct after 6 hours", emoji="⏳", value="6"),
+            discord.SelectOption(label="24 Hours (1 Day)", description="Auto-destruct after 24 hours", emoji="⏳", value="24"),
+            discord.SelectOption(label="Permanent (No Timer)", description="Stays until manually or empty-purged", emoji="♾️", value="0")
+        ]
+        super().__init__(placeholder="Select Auto-Destruct Timer...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        hours = int(self.values[0])
+        modal = CreateNodeModal(self.channel_type, self.visibility, hours)
+        await interaction.response.send_modal(modal)
+
+class TimerConfigView(discord.ui.View):
+    def __init__(self, channel_type: str, visibility: str):
+        super().__init__(timeout=180)
+        self.add_item(TimerSelect(channel_type, visibility))
+
+# --- نافذة كتابة اسم الروم النهائية ---
+class CreateNodeModal(discord.ui.Modal):
+    def __init__(self, channel_type: str, visibility: str, hours: int):
+        self.channel_type = channel_type
+        self.visibility = visibility
+        self.hours = hours
+        title = "Initialize Text Node" if channel_type == "text" else "Initialize Voice Node"
+        super().__init__(title=title)
+
+        self.channel_name = discord.ui.TextInput(
+            label="Node Designation (Name)",
+            placeholder="e.g., tactical-ops",
+            required=True,
+            max_length=50
+        )
 
     async def on_submit(self, interaction: discord.Interaction):
         guild = interaction.guild
@@ -57,74 +110,68 @@ class CreateTextModal(discord.ui.Modal, title="Initialize Text Node"):
         if not category:
             category = await guild.create_category("📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
 
-        is_hidden = self.visibility.value.strip().lower() == "hidden"
+        is_hidden = self.visibility == "hidden"
         
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=not is_hidden, send_messages=not is_hidden),
-            interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
-        }
+        if self.channel_type == "text":
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=not is_hidden, send_messages=not is_hidden),
+                interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+            }
+            for role in guild.roles:
+                if role.permissions.administrator:
+                    overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
 
-        for role in guild.roles:
-            if role.permissions.administrator:
-                overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+            new_chan = await guild.create_text_channel(name=self.channel_name.value, category=category, overwrites=overwrites)
+        else:
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(view_channel=not is_hidden, connect=not is_hidden),
+                interaction.user: discord.PermissionOverwrite(view_channel=True, connect=True, manage_channels=True)
+            }
+            for role in guild.roles:
+                if role.permissions.administrator:
+                    overwrites[role] = discord.PermissionOverwrite(view_channel=True, connect=True, manage_channels=True)
 
-        new_chan = await guild.create_text_channel(name=self.channel_name.value, category=category, overwrites=overwrites)
-        await interaction.response.send_message(f"[SUCCESS] Text Node '{new_chan.name}' successfully provisioned.", ephemeral=True)
+            new_chan = await guild.create_voice_channel(name=self.channel_name.value, category=category, overwrites=overwrites)
 
-# --- نافذة منبثقة (Modal) لإنشاء الروم الصوتي ---
-class CreateVoiceModal(discord.ui.Modal, title="Initialize Voice Node"):
-    channel_name = discord.ui.TextInput(
-        label="Voice Node Designation (Name)",
-        placeholder="e.g., Squad Alpha",
-        required=True,
-        max_length=50
-    )
-    visibility = discord.ui.TextInput(
-        label="Visibility (public / hidden)",
-        placeholder="Type 'hidden' or 'public'",
-        default="public",
-        required=True,
-        max_length=10
-    )
+        # تفعيل المؤقت الزمني إذا لم يكن 0
+        if self.hours > 0:
+            bot.loop.create_task(schedule_channel_deletion(new_chan, self.hours))
 
-    async def on_submit(self, interaction: discord.Interaction):
-        guild = interaction.guild
-        category = discord.utils.get(guild.categories, name="📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
-        if not category:
-            category = await guild.create_category("📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
+        timer_text = f"{self.hours} Hours" if self.hours > 0 else "Permanent"
+        await interaction.response.send_message(f"[SUCCESS] {self.channel_type.capitalize()} Node '{new_chan.name}' provisioned successfully! (Visibility: {self.visibility.upper()} | Timer: {timer_text})", ephemeral=True)
 
-        is_hidden = self.visibility.value.strip().lower() == "hidden"
-        
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=not is_hidden, connect=not is_hidden),
-            interaction.user: discord.PermissionOverwrite(view_channel=True, connect=True, manage_channels=True)
-        }
-
-        for role in guild.roles:
-            if role.permissions.administrator:
-                overwrites[role] = discord.PermissionOverwrite(view_channel=True, connect=True, manage_channels=True)
-
-        new_chan = await guild.create_voice_channel(name=self.channel_name.value, category=category, overwrites=overwrites)
-        await interaction.response.send_message(f"[SUCCESS] Voice Node '{new_chan.name}' successfully provisioned.", ephemeral=True)
-
-# --- الأزرار التفاعلية للتحكم ---
+# --- لوحة التحكم والأزرار الرئيسية ---
 class RoomGeneratorView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
     @discord.ui.button(label="Create Text Node", style=discord.ButtonStyle.green, emoji="💬", custom_id="create_text_btn")
     async def create_text_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(CreateTextModal())
+        view = RoomConfigView("text", "public")
+        await interaction.response.send_message("```prolog\n[PANEL] Configure Text Node parameters below:\n```", view=view, ephemeral=True)
 
     @discord.ui.button(label="Create Voice Node", style=discord.ButtonStyle.blurple, emoji="🔊", custom_id="create_voice_btn")
     async def create_voice_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(CreateVoiceModal())
+        view = RoomConfigView("voice", "public")
+        await interaction.response.send_message("```prolog\n[PANEL] Configure Voice Node parameters below:\n```", view=view, ephemeral=True)
+
+# --- الحذف الفوري للرومات الصوتية عند خروج آخر مستخدم ---
+@bot.event
+async def on_voice_state_update(member, before, after):
+    if before.channel and before.channel != after.channel:
+        category = before.channel.category
+        if category and "SECTOR 05" in category.name:
+            if len(before.channel.members) == 0:
+                try:
+                    await before.channel.delete()
+                except Exception:
+                    pass
 
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    status_msg = await ctx.send("[INIT] Deploying CyberKernel Architecture v19.3...")
+    status_msg = await ctx.send("[INIT] Deploying CyberKernel Architecture v19.5...")
     
     try:
         for channel in list(guild.channels):
@@ -190,11 +237,11 @@ async def setup(ctx):
         await guild.create_text_channel("🛠️・admin-console", category=cat_admin, overwrites=admin_only_overwrites)
 
         embed = discord.Embed(
-            title="SYSTEM DYNAMIC NODE GENERATOR",
-            description="Use the control interface below to provision a custom text or voice channel instantly.\n\n• **Green Button**: Create Text Channel\n• **Blue Button**: Create Voice Channel",
+            title="SYSTEM DYNAMIC NODE GENERATOR v19.5",
+            description="Use the interactive menus below to provision custom channels with advanced security visibility and custom auto-destruct timers.\n\n• **Green Button**: Create Text Node\n• **Blue Button**: Create Voice Node",
             color=0x00E676
         )
-        embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v19.3")
+        embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v19.5")
         await generator_chan.send(embed=embed, view=RoomGeneratorView())
 
         rules_embed = discord.Embed(
@@ -211,7 +258,7 @@ async def setup(ctx):
         )
         await roles_chan.send(embed=roles_embed)
 
-        await status_msg.edit(content="[SUCCESS] CyberKernel Architecture v19.3 deployed successfully.")
+        await status_msg.edit(content="[SUCCESS] CyberKernel Architecture v19.5 deployed successfully.")
 
     except Exception as e:
         print(f"Setup Error: {e}")
