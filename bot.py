@@ -227,4 +227,5 @@ async def clear(ctx, amount: int = 10):
     await ctx.channel.purge(limit=amount + 1)
     msg = await ctx.send(f"[SUCCESS] Purged {amount} messages.", delete_after=5)
 
-bot.run(os.getenv("TOKEN"))
+# التشغيل باستخدام DISCORD_TOKEN الموجود في إعدادات Render
+bot.run(os.getenv("DISCORD_TOKEN"))
