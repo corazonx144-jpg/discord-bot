@@ -8,7 +8,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberKernel Enterprise Core v19.2 Active.")
+        self.wfile.write(b"CyberKernel Enterprise Core v19.3 Active.")
         
     def do_HEAD(self):
         self.send_response(200)
@@ -33,7 +33,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"[-] CYBERKERNEL CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.2] | Interactive UI Active"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.3] | Interactive UI Active"))
 
 # --- نافذة منبثقة (Modal) لإنشاء الروم الكتابي ---
 class CreateTextModal(discord.ui.Modal, title="Initialize Text Node"):
@@ -69,7 +69,7 @@ class CreateTextModal(discord.ui.Modal, title="Initialize Text Node"):
                 overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
 
         new_chan = await guild.create_text_channel(name=self.channel_name.value, category=category, overwrites=overwrites)
-        await interaction.response.send_message(f"```prolog\n[SUCCESS] Text Node '{new_chan.name}' successfully provisioned.\n```", ephemeral=True)
+        await interaction.response.send_message(f"[SUCCESS] Text Node '{new_chan.name}' successfully provisioned.", ephemeral=True)
 
 # --- نافذة منبثقة (Modal) لإنشاء الروم الصوتي ---
 class CreateVoiceModal(discord.ui.Modal, title="Initialize Voice Node"):
@@ -105,7 +105,7 @@ class CreateVoiceModal(discord.ui.Modal, title="Initialize Voice Node"):
                 overwrites[role] = discord.PermissionOverwrite(view_channel=True, connect=True, manage_channels=True)
 
         new_chan = await guild.create_voice_channel(name=self.channel_name.value, category=category, overwrites=overwrites)
-        await interaction.response.send_message(f"```prolog\n[SUCCESS] Voice Node '{new_chan.name}' successfully provisioned.\n```", ephemeral=True)
+        await interaction.response.send_message(f"[SUCCESS] Voice Node '{new_chan.name}' successfully provisioned.", ephemeral=True)
 
 # --- الأزرار التفاعلية للتحكم ---
 class RoomGeneratorView(discord.ui.View):
@@ -124,17 +124,15 @@ class RoomGeneratorView(discord.ui.View):
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    status_msg = await ctx.send("```prolog\n[INIT] Deploying CyberKernel Enterprise Architecture v19.2...\n```")
+    status_msg = await ctx.send("[INIT] Deploying CyberKernel Architecture v19.3...")
     
     try:
-        # 1. حذف القنوات القديمة
         for channel in list(guild.channels):
             try:
                 await channel.delete()
             except Exception:
                 pass
 
-        # 2. حذف الرتب القديمة
         for role in list(guild.roles):
             if role != guild.default_role and not role.managed and role != guild.me.top_role and role.position < guild.me.top_role.position:
                 try:
@@ -142,13 +140,11 @@ async def setup(ctx):
                 except Exception:
                     pass
 
-        # 3. إنشاء الرتب
         admin_role = await guild.create_role(name="👑 ── [ ROOT_ADMIN ] ── 👑", color=discord.Color.from_rgb(235, 50, 50), permissions=discord.Permissions(administrator=True))
         mod_role = await guild.create_role(name="🛡️ ── [ SECURITY_OFFICER ] ── 🛡️", color=discord.Color.from_rgb(255, 140, 0), permissions=discord.Permissions(manage_messages=True, kick_members=True, ban_members=True))
         agent_role = await guild.create_role(name="⚡ ── [ ELITE_AGENT ] ── ⚡", color=discord.Color.from_rgb(0, 230, 118))
         guest_role = await guild.create_role(name="👤 ── [ GUEST_NODE ] ── 👤", color=discord.Color.from_rgb(140, 140, 140))
 
-        # 4. إعداد الصلاحيات
         everyone = guild.default_role
 
         public_overwrites = {
@@ -167,7 +163,6 @@ async def setup(ctx):
             mod_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)
         }
 
-        # 5. بناء الأقسام والشانلز
         cat1 = await guild.create_category("🔒 ── [ SECTOR 01 ] SYSTEM CORE ── 🔒")
         rules_chan = await guild.create_text_channel("📜・security-directives", category=cat1, overwrites=readonly_overwrites)
         roles_chan = await guild.create_text_channel("🛡️・role-hierarchy-guide", category=cat1, overwrites=readonly_overwrites)
@@ -199,7 +194,7 @@ async def setup(ctx):
             description="Use the control interface below to provision a custom text or voice channel instantly.\n\n• **Green Button**: Create Text Channel\n• **Blue Button**: Create Voice Channel",
             color=0x00E676
         )
-        embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v19.2")
+        embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v19.3")
         await generator_chan.send(embed=embed, view=RoomGeneratorView())
 
         rules_embed = discord.Embed(
@@ -211,9 +206,50 @@ async def setup(ctx):
 
         roles_embed = discord.Embed(
             title="ENTERPRISE ROLE HIERARCHY & CLEARANCE",
-            description="Detailed breakdown of security clearances and operational roles established within the system network:",
+            description="Detailed breakdown of security clearances and operational roles established within the system network.",
             color=0x00E676
         )
         await roles_chan.send(embed=roles_embed)
 
-        await status_msg.edit(content="```prolog\n
+        await status_msg.edit(content="[SUCCESS] CyberKernel Architecture v19.3 deployed successfully.")
+
+    except Exception as e:
+        print(f"Setup Error: {e}")
+        await ctx.send(f"[CRITICAL ERROR] Setup failed: {e}")
+
+@setup.error
+async def setup_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("[ERROR] Access Denied: Administrator clearance required.", delete_after=5)
+
+@bot.event
+async def on_member_join(member):
+    for channel in member.guild.text_channels:
+        if "connection" in channel.name or "welcome" in channel.name:
+            await channel.send(f"Welcome agent <@{member.id}> to the mainframe network!")
+            break
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    if "http://" in message.content or "https://" in message.content or "discord.gg" in message.content:
+        if not message.author.guild_permissions.administrator:
+            try:
+                await message.delete()
+                warning = await message.channel.send(f"[SECURITY BREACH] Unauthorized external transmission dropped for <@{message.author.id}>.")
+                await warning.delete(delay=5)
+            except Exception:
+                pass
+            return
+    await bot.process_commands(message)
+
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def clear(ctx, amount: int = 5):
+    await ctx.channel.purge(limit=amount + 1)
+    msg = await ctx.send(f"[SYSTEM] Purged {amount} packets.")
+    await msg.delete(delay=3)
+
+TOKEN = os.getenv("DISCORD_TOKEN")
+bot.run(TOKEN)
