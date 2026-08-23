@@ -9,7 +9,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberKernel Enterprise Core v22.1 Active.")
+        self.wfile.write(b"CyberKernel Enterprise Core v23.0 Active.")
         
     def do_HEAD(self):
         self.send_response(200)
@@ -37,7 +37,7 @@ async def on_ready():
     bot.add_view(RoleSelectView())
     bot.add_view(RoomConfigSelectView())
     print(f"[-] CYBERKERNEL CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v22.1] | Full Dropdown System Active"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v23.0] | Dropdown Fresh Cache"))
 
 async def schedule_channel_deletion(channel, hours):
     await asyncio.sleep(hours * 3600)
@@ -104,7 +104,7 @@ class RoomConfigSelectView(discord.ui.View):
 
     @discord.ui.select(
         placeholder="💬 Select Channel Type...",
-        custom_id="select_node_type_v22_1",
+        custom_id="select_node_type_v23",
         options=[
             discord.SelectOption(label="Text Channel", value="text", description="Create a secure text node", emoji="💬"),
             discord.SelectOption(label="Voice Channel", value="voice", description="Create a secure voice node", emoji="🔊")
@@ -116,7 +116,7 @@ class RoomConfigSelectView(discord.ui.View):
 
     @discord.ui.select(
         placeholder="🔓 Select Visibility...",
-        custom_id="select_node_visibility_v22_1",
+        custom_id="select_node_visibility_v23",
         options=[
             discord.SelectOption(label="Public", value="public", description="Visible to everyone", emoji="🔓"),
             discord.SelectOption(label="Hidden", value="hidden", description="Private / Restricted access", emoji="🔒")
@@ -128,7 +128,7 @@ class RoomConfigSelectView(discord.ui.View):
 
     @discord.ui.select(
         placeholder="⏳ Select Auto-Destruct Timer...",
-        custom_id="select_node_timer_v22_1",
+        custom_id="select_node_timer_v23",
         options=[
             discord.SelectOption(label="Permanent", value="0", description="No auto-deletion", emoji="⏳"),
             discord.SelectOption(label="1 Hour", value="1", description="Deletes after 1 hour", emoji="⏱️"),
@@ -140,7 +140,7 @@ class RoomConfigSelectView(discord.ui.View):
         self.hours = int(select.values[0])
         await interaction.response.send_message(f"[CONFIG] Timer set to: **{self.hours} Hours** (0 = Permanent)", ephemeral=True)
 
-    @discord.ui.button(label="🚀 Create Custom Node", style=discord.ButtonStyle.success, emoji="⚙️", custom_id="trigger_node_modal_v22_1", row=3)
+    @discord.ui.button(label="🚀 Create Custom Node", style=discord.ButtonStyle.success, emoji="⚙️", custom_id="trigger_node_modal_v23", row=3)
     async def create_node_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = RoomCreationModal(self.node_type, self.visibility, self.hours)
         await interaction.response.send_modal(modal)
@@ -178,7 +178,7 @@ class RoleApprovalView(discord.ui.View):
         except:
             pass
 
-# --- قائمة اختيار الرتب الاحترافية (Dropdown) ---
+# --- قائمة اختيار الرتب الاحترافية (Dropdown) مع معرف جديد كلياً ---
 class RoleSelectDropdown(discord.ui.Select):
     def __init__(self):
         options = [
@@ -186,7 +186,7 @@ class RoleSelectDropdown(discord.ui.Select):
             discord.SelectOption(label="Guest Node", value="guest", description="Standard guest visitor role", emoji="👤"),
             discord.SelectOption(label="Security Officer", value="mod", description="Request high-clearance moderator role", emoji="🛡️")
         ]
-        super().__init__(placeholder="🛡️ Click here to select your clearance role...", min_values=1, max_values=1, options=options, custom_id="role_select_dropdown_v22_1")
+        super().__init__(placeholder="🛡️ Click here to select your clearance role...", min_values=1, max_values=1, options=options, custom_id="role_select_dropdown_v23_fresh")
 
     async def callback(self, interaction: discord.Interaction):
         val = self.values[0]
@@ -258,7 +258,7 @@ async def on_voice_state_update(member, before, after):
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    status_msg = await ctx.send("[INIT] Deploying CyberKernel Architecture v22.1...")
+    status_msg = await ctx.send("[INIT] Deploying CyberKernel Architecture v23.0...")
     
     try:
         for channel in list(guild.channels):
@@ -324,11 +324,11 @@ async def setup(ctx):
         await guild.create_text_channel("🛠️・admin-console", category=cat_admin, overwrites=admin_only_overwrites)
 
         generator_embed = discord.Embed(
-            title="SYSTEM DYNAMIC NODE GENERATOR v22.1",
+            title="SYSTEM DYNAMIC NODE GENERATOR v23.0",
             description="Use the interactive dropdown menus below to configure your node properties (Type, Visibility, Timer), then click **🚀 Create Custom Node** to open the naming modal.",
             color=0x00E676
         )
-        generator_embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v22.1")
+        generator_embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v23.0")
         await generator_chan.send(embed=generator_embed, view=RoomConfigSelectView())
 
         rules_embed = discord.Embed(
@@ -346,7 +346,7 @@ async def setup(ctx):
         roles_embed.set_footer(text="CYBERKERNEL ROLE MANAGEMENT SYSTEM")
         await roles_chan.send(embed=roles_embed, view=RoleSelectView())
 
-        await status_msg.edit(content="[SUCCESS] CyberKernel Architecture v22.1 deployed successfully.")
+        await status_msg.edit(content="[SUCCESS] CyberKernel Architecture v23.0 deployed successfully.")
 
     except Exception as e:
         print(f"Setup Error: {e}")
