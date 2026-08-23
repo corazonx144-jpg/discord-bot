@@ -49,7 +49,7 @@ class VerificationView(discord.ui.View):
             await interaction.response.send_message("[INFO] You are already verified!", ephemeral=True)
         else:
             await interaction.user.add_roles(role)
-            await interaction.response.send_message("[SUCCESS] Verification complete. Access granted to system sectors.", ephemeral=True)
+            await interaction.response.send_message("[SUCCESS] Verification complete. Access granted.", ephemeral=True)
 
 
 class SelfRolesView(discord.ui.View):
@@ -88,7 +88,7 @@ class TicketView(discord.ui.View):
     @discord.ui.button(label="Open Support Ticket", style=discord.ButtonStyle.success, custom_id="open_ticket", emoji="🎫")
     async def open_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         guild = interaction.guild
-        category = discord.utils.get(guild.categories, name="-- [ Sector 02 ] Terminal Chat")
+        category = discord.utils.get(guild.categories, name="⚡ -- [ Sector 02 ] Terminal Chat")
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
@@ -137,7 +137,7 @@ class AdminControlView(discord.ui.View):
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('Enterprise Bot fully operational with complete professional layout.')
+    print('Smart Enterprise Bot fully operational.')
 
 @bot.command(name="setup")
 @commands.has_permissions(administrator=True)
@@ -148,69 +148,69 @@ async def setup(ctx):
     except:
         pass
     
-    status_msg = await ctx.send("[INFO] Deploying complete professional server architecture...")
+    status_msg = await ctx.send("[INFO] Purging server and rebuilding clean professional layout...")
 
-    # التأكد من عدم تكرار الأقسام بل تحديثها أو إنشائها إن لم تكن موجودة
-    def get_or_create_cat(name):
-        return discord.utils.get(guild.categories, name=name)
+    # 1. مسح وتنظيف السيرفر بالكامل من أي قنوات وأقسام قديمة لمنع أي تكرار
+    for channel in guild.channels:
+        try:
+            await channel.delete()
+            await asyncio.sleep(0.3)
+        except:
+            pass
 
-    # Sector 01
-    cat1 = get_or_create_cat("🔒 -- [ Sector 01 ] System Core") or await guild.create_category("🔒 -- [ Sector 01 ] System Core")
+    for category in guild.categories:
+        try:
+            await category.delete()
+            await asyncio.sleep(0.3)
+        except:
+            pass
+
+    # 2. بناء الهيكلة الجديدة بالكامل مع الحروف الكبيرة (Capitalized) والتنسيق الاحترافي
     
-    sec_dir = discord.utils.get(cat1.text_channels, name="security-directives") or await guild.create_text_channel("security-directives", category=cat1)
+    # Sector 01: System Core
+    cat1 = await guild.create_category("🔒 -- [ Sector 01 ] System Core")
+    sec_dir = await guild.create_text_channel("Security-Directives", category=cat1)
     await sec_dir.send("**[Verification Protocol]**\nClick below to verify your identity and unlock system access:", view=VerificationView())
 
-    role_guide = discord.utils.get(cat1.text_channels, name="role-hierarchy-guide") or await guild.create_text_channel("role-hierarchy-guide", category=cat1)
+    role_guide = await guild.create_text_channel("Role-Hierarchy-Guide", category=cat1)
     await role_guide.send("**[Enterprise Self-Roles Clearance System]**\nSelect your desired operational clearance role using the interactive buttons below:", view=SelfRolesView())
 
-    sys_broadcast = discord.utils.get(cat1.text_channels, name="system-broadcast") or await guild.create_text_channel("system-broadcast", category=cat1)
+    await guild.create_text_channel("System-Broadcast", category=cat1)
 
-    # Sector 02
-    cat2 = get_or_create_cat("⚡ -- [ Sector 02 ] Terminal Chat") or await guild.create_category("⚡ -- [ Sector 02 ] Terminal Chat")
-    for ch_name in ["connection-terminal", "global-network", "command-shell", "payload-archive"]:
-        if not discord.utils.get(cat2.text_channels, name=ch_name):
-            await guild.create_text_channel(ch_name, category=cat2)
-    
-    conn_term = discord.utils.get(cat2.text_channels, name="connection-terminal")
-    if conn_term:
-        await conn_term.send("**[Connection Terminal]**\nWelcome to the network. Use the ticketing system below for support:", view=TicketView())
+    # Sector 02: Terminal Chat
+    cat2 = await guild.create_category("⚡ -- [ Sector 02 ] Terminal Chat")
+    conn_term = await guild.create_text_channel("Connection-Terminal", category=cat2)
+    await conn_term.send("**[Connection Terminal]**\nWelcome to the network. Use the ticketing system below for support:", view=TicketView())
 
-    # Sector 03
-    cat3 = get_or_create_cat("🎧 -- [ Sector 03 ] Secure Nodes") or await guild.create_category("🎧 -- [ Sector 03 ] Secure Nodes")
+    for ch_name in ["Global-Network", "Command-Shell", "Payload-Archive"]:
+        await guild.create_text_channel(ch_name, category=cat2)
+
+    # Sector 03: Secure Nodes
+    cat3 = await guild.create_category("🎧 -- [ Sector 03 ] Secure Nodes")
     for vc_name in ["[Node-01] Safe Zone", "[Node-02] Operations Room", "[Node-03] Secure Alpha"]:
-        if not discord.utils.get(cat3.voice_channels, name=vc_name):
-            await guild.create_voice_channel(vc_name, category=cat3)
+        await guild.create_voice_channel(vc_name, category=cat3)
 
-    # Sector 04
-    cat4 = get_or_create_cat("🎛️ -- [ Sector 04 ] Room Generator") or await guild.create_category("🎛️ -- [ Sector 04 ] Room Generator")
-    if not discord.utils.get(cat4.text_channels, name="room-generator"):
-        await guild.create_text_channel("room-generator", category=cat4)
+    # Sector 04: Room Generator
+    cat4 = await guild.create_category("🎛️ -- [ Sector 04 ] Room Generator")
+    await guild.create_text_channel("Room-Generator", category=cat4)
 
-    # Sector 05
-    cat5 = get_or_create_cat("📁 -- [ Sector 05 ] Dynamic Notes") or await guild.create_category("📁 -- [ Sector 05 ] Dynamic Notes")
+    # Sector 05: Dynamic Notes
+    await guild.create_category("📁 -- [ Sector 05 ] Dynamic Notes")
 
-    # Sector 06
-    cat6 = get_or_create_cat("👁️ -- [ Sector 06 ] Control & Logs") or await guild.create_category("👁️ -- [ Sector 06 ] Control & Logs")
-    for ch_name in ["room-control-hub", "surveillance-logs"]:
-        if not discord.utils.get(cat6.text_channels, name=ch_name):
-            await guild.create_text_channel(ch_name, category=cat6)
+    # Sector 06: Control & Logs
+    cat6 = await guild.create_category("👁️ -- [ Sector 06 ] Control & Logs")
+    for ch_name in ["Room-Control-Hub", "Surveillance-Logs"]:
+        await guild.create_text_channel(ch_name, category=cat6)
 
     # Admin Console
-    admin_cat = get_or_create_cat("⚙️ -- [ Admin Console ]") or await guild.create_category("⚙️ -- [ Admin Console ]")
-    admin_ch = discord.utils.get(admin_cat.text_channels, name="admin-console")
-    if not admin_ch:
-        admin_ch = await guild.create_text_channel("admin-console", category=admin_cat, overwrites={
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            guild.me: discord.PermissionOverwrite(read_messages=True)
-        })
-        await admin_ch.send("**[Administrative Control Panel]**\nManage emergency lockdown and system security states:", view=AdminControlView())
+    admin_cat = await guild.create_category("⚙️ -- [ Admin Console ]")
+    admin_ch = await guild.create_text_channel("Admin-Console", category=admin_cat, overwrites={
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True)
+    })
+    await admin_ch.send("**[Administrative Control Panel]**\nManage emergency lockdown and system security states:", view=AdminControlView())
 
-    try:
-        await status_msg.edit(content="[SUCCESS] Complete server architecture synchronized and deployed successfully with Capitalized UI components!")
-        await asyncio.sleep(5)
-        await status_msg.delete()
-    except:
-        pass
+    print("[SUCCESS] Server architecture successfully rebuilt.")
 
 @bot.command(name="clear")
 @commands.has_permissions(manage_messages=True)
