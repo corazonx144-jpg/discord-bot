@@ -44,6 +44,8 @@ WHT = "\u001b[1;37m"
 BLK = "\u001b[0;30m"
 RST = "\u001b[0m"
 DIM = "\u001b[2m"
+MAG = "\u001b[1;35m"
+BLU = "\u001b[1;34m"
 
 
 def _hash_id(uid: int) -> str:
