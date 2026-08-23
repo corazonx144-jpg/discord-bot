@@ -9,7 +9,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberKernel Enterprise Core v19.8 Active.")
+        self.wfile.write(b"CyberKernel Enterprise Core v19.9 Active.")
         
     def do_HEAD(self):
         self.send_response(200)
@@ -35,7 +35,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"[-] CYBERKERNEL CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.8] | Dropdown Generator & Smart Approvals Active"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.9] | Custom Modals & Smart Approvals Active"))
 
 async def schedule_channel_deletion(channel, hours):
     await asyncio.sleep(hours * 3600)
@@ -44,52 +44,85 @@ async def schedule_channel_deletion(channel, hours):
     except Exception:
         pass
 
-# --- نظام توليد الرومات عبر القائمة المنسدلة (بدون مودال لتجنب الـ Timeout نهائياً) ---
-class RoomTypeSelect(discord.ui.Select):
+# --- نافذة مخصصة بالكامل لاختيار الاسم، النوع، والوقت بحرية ---
+class CustomNodeModal(discord.ui.Modal):
     def __init__(self):
-        options = [
-            discord.SelectOption(label="Create Public Text Node", description="Instant public text channel", emoji="💬", value="pub_text"),
-            discord.SelectOption(label="Create Hidden Text Node", description="Instant private/hidden text channel", emoji="🔒", value="hid_text"),
-            discord.SelectOption(label="Create Public Voice Node", description="Instant public voice channel", emoji="🔊", value="pub_voice"),
-            discord.SelectOption(label="Create Hidden Voice Node", description="Instant private/hidden voice channel", emoji="🎧", value="hid_voice")
-        ]
-        super().__init__(placeholder="Select channel provisioning type...", min_values=1, max_values=1, options=options, custom_id="room_type_select_v3")
+        super().__init__(title="Custom Node Provisioning")
 
-    async def callback(self, interaction: discord.Interaction):
+        self.node_name = discord.ui.TextInput(
+            label="Channel Name",
+            placeholder="e.g. tactical-ops",
+            required=True,
+            max_length=50
+        )
+        self.node_type = discord.ui.TextInput(
+            label="Type (text or voice)",
+            placeholder="text / voice",
+            default="text",
+            required=True,
+            max_length=5
+        )
+        self.visibility = discord.ui.TextInput(
+            label="Visibility (public or hidden)",
+            placeholder="public / hidden",
+            default="public",
+            required=True,
+            max_length=10
+        )
+        self.timer_hours = discord.ui.TextInput(
+            label="Auto-Destruct Timer (Hours / 0 for None)",
+            placeholder="0, 1, 6, 24",
+            default="0",
+            required=True,
+            max_length=3
+        )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # استجابة فورية لمنع أي Timeout نهائياً
         await interaction.response.defer(ephemeral=True)
+
         guild = interaction.guild
         category = discord.utils.get(guild.categories, name="📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
         if not category:
             category = await guild.create_category("📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
 
-        val = self.values[0]
-        is_hidden = "hid" in val
-        is_text = "text" in val
+        name = self.node_name.value.strip().lower().replace(" ", "-")
+        n_type = self.node_type.value.strip().lower()
+        is_hidden = self.visibility.value.strip().lower() == "hidden"
         
-        user_name = interaction.user.name.lower().replace(" ", "-")
-        chan_name = f"node-{user_name}"
+        try:
+            hours = int(self.timer_hours.value.strip())
+        except ValueError:
+            hours = 0
 
-        if is_text:
-            overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=not is_hidden, send_messages=not is_hidden),
-                interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
-            }
-            new_chan = await guild.create_text_channel(name=chan_name, category=category, overwrites=overwrites)
-        else:
+        if "voice" in n_type:
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(view_channel=not is_hidden, connect=not is_hidden),
                 interaction.user: discord.PermissionOverwrite(view_channel=True, connect=True, manage_channels=True)
             }
-            new_chan = await guild.create_voice_channel(name=chan_name, category=category, overwrites=overwrites)
+            new_chan = await guild.create_voice_channel(name=name, category=category, overwrites=overwrites)
+        else:
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=not is_hidden, send_messages=not is_hidden),
+                interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+            }
+            new_chan = await guild.create_text_channel(name=name, category=category, overwrites=overwrites)
 
-        await interaction.followup.send(f"[SUCCESS] Node `{new_chan.name}` has been successfully provisioned!", ephemeral=True)
+        if hours > 0:
+            bot.loop.create_task(schedule_channel_deletion(new_chan, hours))
+
+        timer_str = f"{hours} Hours" if hours > 0 else "Permanent"
+        await interaction.followup.send(f"[SUCCESS] Node `{new_chan.name}` created successfully! (Type: {n_type.capitalize()} | Visibility: {'Hidden' if is_hidden else 'Public'} | Timer: {timer_str})", ephemeral=True)
 
 class RoomGeneratorView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(RoomTypeSelect())
 
-# --- نظام Self-Roles الذكي مع طلب الموافقة للرتب العالية ---
+    @discord.ui.button(label="Initialize Custom Node", style=discord.ButtonStyle.green, emoji="⚙️", custom_id="init_custom_node_btn")
+    async def init_node(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(CustomNodeModal())
+
+# --- نظام Self-Roles الذكي للرتب العادية والحساسة ---
 class RoleApprovalView(discord.ui.View):
     def __init__(self, member: discord.Member, role: discord.Role):
         super().__init__(timeout=86400)
@@ -131,7 +164,7 @@ class SelfRoleSelect(discord.ui.Select):
             discord.SelectOption(label="Security Officer", description="Requires Owner/Admin approval (High clearance)", emoji="🛡️", value="mod"),
             discord.SelectOption(label="Guest Node", description="Instant grant: Basic visitor role", emoji="👤", value="guest")
         ]
-        super().__init__(placeholder="Select your operational clearance role...", min_values=1, max_values=1, options=options, custom_id="self_role_select_v3")
+        super().__init__(placeholder="Select your operational clearance role...", min_values=1, max_values=1, options=options, custom_id="self_role_select_v4")
 
     async def callback(self, interaction: discord.Interaction):
         guild = interaction.guild
@@ -148,7 +181,7 @@ class SelfRoleSelect(discord.ui.Select):
         role = discord.utils.get(guild.roles, name=target_role_name)
 
         if not role:
-            await interaction.response.send_message("[ERROR] Role not found in system database.", ephemeral=True)
+            await interaction.response.send_message(f"[ERROR] Role '{target_role_name}' not found. Please re-run !setup.", ephemeral=True)
             return
 
         # الرتب العادية تُمنح فوراً
@@ -160,7 +193,7 @@ class SelfRoleSelect(discord.ui.Select):
                 await member.add_roles(role)
                 await interaction.response.send_message(f"[SUCCESS] Role '{role.name}' has been instantly granted.", ephemeral=True)
         
-        # الرتب الحساسة (مثل Security Officer) ترسل طلب للأدمين في قناة التحكم
+        # الرتبة الحساسة (Security Officer) ترسل طلب للمالك/الأدمين في قناة التحكم
         elif selected_val == "mod":
             if role in member.roles:
                 await interaction.response.send_message("[INFO] You already possess this clearance role.", ephemeral=True)
@@ -204,7 +237,7 @@ async def on_voice_state_update(member, before, after):
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    status_msg = await ctx.send("[INIT] Deploying CyberKernel Architecture v19.8...")
+    status_msg = await ctx.send("[INIT] Deploying CyberKernel Architecture v19.9...")
     
     try:
         for channel in list(guild.channels):
@@ -270,11 +303,11 @@ async def setup(ctx):
         await guild.create_text_channel("🛠️・admin-console", category=cat_admin, overwrites=admin_only_overwrites)
 
         embed = discord.Embed(
-            title="SYSTEM DYNAMIC NODE GENERATOR v19.8",
-            description="Use the interactive menu below to instantly provision custom text or voice nodes without delays.",
+            title="SYSTEM DYNAMIC NODE GENERATOR v19.9",
+            description="Click the button below to configure and provision your custom node with full name, type, visibility, and timer control.",
             color=0x00E676
         )
-        embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v19.8")
+        embed.set_footer(text="CYBERKERNEL ENTERPRISE INTERFACE v19.9")
         await generator_chan.send(embed=embed, view=RoomGeneratorView())
 
         rules_embed = discord.Embed(
@@ -286,13 +319,13 @@ async def setup(ctx):
 
         roles_embed = discord.Embed(
             title="ENTERPRISE SELF-ROLES CLEARANCE SYSTEM",
-            description="Select your desired operational clearance role from the interactive dropdown menu below.\n*Note: High-clearance roles require administrative approval.*",
+            description="Select your desired operational clearance role from the interactive dropdown menu below.\n*Note: High-clearance roles (Security Officer) require administrative approval.*",
             color=0x00E676
         )
         roles_embed.set_footer(text="CYBERKERNEL ROLE MANAGEMENT SYSTEM")
         await roles_chan.send(embed=roles_embed, view=SelfRoleView())
 
-        await status_msg.edit(content="[SUCCESS] CyberKernel Architecture v19.8 deployed successfully.")
+        await status_msg.edit(content="[SUCCESS] CyberKernel Architecture v19.9 deployed successfully.")
 
     except Exception as e:
         print(f"Setup Error: {e}")
@@ -327,7 +360,7 @@ async def on_message(message):
 
 @bot.command()
 @commands.has_permissions(manage_messages=True)
-async def clear(ctx, amount: int = 5):
+async def clear(ctx, amount: int=5):
     await ctx.channel.purge(limit=amount + 1)
     msg = await ctx.send(f"[SYSTEM] Purged {amount} packets.")
     await msg.delete(delay=3)
