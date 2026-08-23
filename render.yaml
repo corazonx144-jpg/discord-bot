@@ -1,0 +1,14 @@
+services:
+  # Free-compatible option: this is a Web Service, not a paid Background Worker.
+  - type: web
+    name: discord-nexus-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DEV_GUILD_ID
+        sync: false
