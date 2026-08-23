@@ -330,10 +330,21 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_member_join(member: discord.Member) -> None:
+    """Track new member stage. Scan goes to DM so arrival-terminal stays clean."""
     await bot.database.set_member_stage(member.guild.id, member.id, "arrival")
-    channel = discord.utils.get(member.guild.text_channels, name="⌁-arrival-terminal")
-    if channel:
-        await run_arrival_scan(channel, member)
+    try:
+        embed = hx_embed(
+            "NEXUS // INCOMING SIGNAL",
+            f"{CYN}[SCAN]{RST}  Biometric signature detected\n"
+            f"{GRN}[ID]{RST}     {member.mention}\n"
+            f"{YLW}[ALERT]{RST}  Unverified entity in Sector 01\n"
+            f"{RED}[ACTION]{RST}  Go to ⌁-arrival-terminal and initiate verification",
+            colour=0xFF4444,
+            member=member,
+        )
+        await member.send(embed=embed)
+    except discord.Forbidden:
+        pass  # DMs disabled — arrival-terminal panel is still visible
 
 
 @bot.event
