@@ -9,7 +9,7 @@ import discord
 
 from database import Database
 
-# ── ANSI colour codes for Discord terminal blocks ──
+# ── ANSI colour codes ──
 BLK = "\u001b[0;30m"
 RED = "\u001b[1;31m"
 GRN = "\u001b[1;32m"
@@ -39,7 +39,6 @@ def hx_embed(
     colour: int = 0x00FF41,
     member: discord.Member | None = None,
 ) -> discord.Embed:
-    """Hacker terminal embed with optional user avatar thumbnail."""
     frame = (
         f"{CYN}╔══════════════════════════════════════════════════════════════╗{RST}\n"
         f"{CYN}║{RST}  {WHT}{header:^56}{RST}  {CYN}║{RST}\n"
@@ -54,49 +53,7 @@ def hx_embed(
     return embed
 
 
-def loading_embed(member: discord.Member, pct: int, status_text: str) -> discord.Embed:
-    """Animated-looking loading terminal."""
-    lines = (
-        f"{CYN}[SCAN]{RST}   Biometric acquisition in progress...\n"
-        f"{CYN}[ID]{RST}     {member.mention}\n"
-        f"{CYN}[HASH]{RST}   {_hash_id(member.id)}\n"
-        f"{CYN}[LOAD]{RST}   {_bar(pct)}  {GRN}{pct}%{RST}\n"
-        f"{DIM}[LOG]{RST}    {status_text}{RST}"
-    )
-    return hx_embed("NEXUS // IDENTITY SCAN", lines, colour=0x22D3EE, member=member)
-
-
-async def run_arrival_scan(channel: discord.TextChannel, member: discord.Member) -> discord.Message:
-    """Send a cinematic loading sequence then the verify panel."""
-    msg = await channel.send(embed=loading_embed(member, 0, "Initializing neural link..."))
-    stages = [
-        (12, "Parsing biometric signature..."),
-        (28, "Cross-referencing global database..."),
-        (45, "Decrypting identity hash..."),
-        (61, "Analyzing behavioural patterns..."),
-        (78, "Running clearance validation..."),
-        (94, "Awaiting manual protocol trigger..."),
-        (100, "SCAN COMPLETE — SUBJECT UNVERIFIED"),
-    ]
-    for pct, text in stages:
-        await asyncio.sleep(0.7)
-        await msg.edit(embed=loading_embed(member, pct, text))
-
-    final_lines = (
-        f"{RED}[ALERT]{RST}  Unverified entity detected in Sector 01\n"
-        f"{CYN}[ID]{RST}     {member.mention}  `UID:{member.id}`\n"
-        f"{CYN}[HASH]{RST}   {_hash_id(member.id)}\n"
-        f"{YLW}[STATUS]{RST} CLEARANCE REQUIRED\n"
-        f"{GRN}[ACTION]{RST} Execute verification protocol below"
-    )
-    final_embed = hx_embed("NEXUS // INCOMING SIGNAL", final_lines, colour=0xFF4444, member=member)
-    await msg.edit(embed=final_embed, view=VerificationView(member.guild.id if member.guild else 0, member.id))
-    return msg
-
-
 class StageTransitionView(discord.ui.View):
-    """Persistent proceed button; reads DB stage and unlocks next sector."""
-
     def __init__(self, database: Database) -> None:
         super().__init__(timeout=None)
         self.database = database
@@ -145,7 +102,6 @@ class StageTransitionView(discord.ui.View):
 
 class VerificationView(discord.ui.View):
     def __init__(self, guild_id: int = 0, target_id: int = 0) -> None:
-        """When used as a persistent view (in setup_hook) guild_id/target_id are 0."""
         super().__init__(timeout=None)
         self.guild_id = guild_id
         self.target_id = target_id
@@ -155,7 +111,6 @@ class VerificationView(discord.ui.View):
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             return await interaction.response.send_message("Server only.", ephemeral=True)
 
-        # If this view was tied to a specific arrival-scan message, ignore clicks from others
         if self.target_id and interaction.user.id != self.target_id:
             return await interaction.response.send_message(
                 f"{RED}[ERR]{RST}  This scan session is not assigned to your identity.", ephemeral=True
@@ -178,7 +133,6 @@ class VerificationView(discord.ui.View):
         await db.set_verification_status(interaction.guild.id, interaction.user.id, "pending")
         await db.set_member_stage(interaction.guild.id, interaction.user.id, "pending_verify")
 
-        # Processing ephemeral
         proc = hx_embed(
             "VERIFY.EXE // EXECUTING",
             f"{CYN}[TX]{RST}     Encrypting payload...\n"
@@ -189,7 +143,6 @@ class VerificationView(discord.ui.View):
         )
         await interaction.response.send_message(embed=proc, ephemeral=True)
 
-        # Send to approval queue
         req_embed = hx_embed(
             "ACCESS REQUEST // TX",
             f"{CYN}[TX]{RST}     Target: Administration Queue\n"
