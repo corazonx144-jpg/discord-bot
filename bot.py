@@ -176,7 +176,7 @@ def _add_role_overwrite(base: dict, role: discord.Role) -> dict:
 
 
 def cmd_embed(header: str, lines: str, colour: int = 0x00FF41) -> discord.Embed:
-    """Clean CMD-style embed without heavy ANSI frames."""
+    """Clean CMD-style embed."""
     body = (
         f"{CYN}╔══════════════════════════════════════════════════════════════╗{RST}\n"
         f"{CYN}║{RST}  {WHT}{header:^56}{RST}  {CYN}║{RST}\n"
@@ -393,28 +393,45 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_member_join(member: discord.Member) -> None:
-    """Send a temporary personalized scan in arrival-terminal with @mention."""
+    """Ultra-professional incoming scan with separator, @mention, avatar, hash."""
     await bot.database.set_member_stage(member.guild.id, member.id, "arrival")
     channel = discord.utils.get(member.guild.text_channels, name="⌁-arrival-terminal")
     if channel:
         ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-        embed = cmd_embed(
-            f"INCOMING // {member.name.upper()}",
+
+        # 1. Send separator
+        sep = (
+            f"{CYN}▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬{RST}\n"
+            f"{WHT}  INCOMING TRANSMISSION  |  {ts}{RST}\n"
+            f"{CYN}▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬{RST}"
+        )
+        sep_embed = discord.Embed(description=f"```ansi\n{sep}\n```", colour=0x22D3EE)
+        sep_msg = await channel.send(embed=sep_embed)
+
+        # 2. Typing effect
+        async with channel.typing():
+            await asyncio.sleep(1.5)
+
+        # 3. Main scan embed with @mention inside
+        scan_lines = (
             f"{CYN}[SCAN]{RST}   Biometric lock engaged\n"
             f"{GRN}[TARGET]{RST} {member.mention}\n"
             f"{CYN}[UID]{RST}    {member.id}\n"
             f"{CYN}[HASH]{RST}   {_hash_id(member.id)}\n"
             f"{CYN}[TIME]{RST}   {ts}\n"
             f"{YLW}[STATUS]{RST} UNVERIFIED — SECTOR 01\n"
-            f"{RED}[ALERT]{RST}  Clearance required for sector access\n"
-            f"{GRN}[ACTION]{RST} Execute VERIFY.EXE below",
-            colour=0xFF4444,
+            f"{RED}[ALERT]{RST}  Clearance required for sector access\n\n"
+            f"{GRN}[ACTION]{RST} Execute VERIFY.EXE below"
         )
-        embed.set_thumbnail(url=member.display_avatar.url)
-        msg = await channel.send(content=member.mention, embed=embed)
-        await asyncio.sleep(20)
+        scan_embed = cmd_embed(f"WELCOME  {member.name.upper()}", scan_lines, colour=0xFF4444)
+        scan_embed.set_thumbnail(url=member.display_avatar.url)
+        scan_msg = await channel.send(content=member.mention, embed=scan_embed)
+
+        # 4. Auto-delete after 30s
+        await asyncio.sleep(30)
         with suppress(discord.NotFound):
-            await msg.delete()
+            await sep_msg.delete()
+            await scan_msg.delete()
 
 
 @bot.event
