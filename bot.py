@@ -41,15 +41,20 @@ class VerificationView(discord.ui.View):
 
     @discord.ui.button(label="Verify Identity", style=discord.ButtonStyle.green, custom_id="verify_button", emoji="🛡️")
     async def verify_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        role = discord.utils.get(interaction.guild.roles, name="Verified")
+        guild = interaction.guild
+        role = discord.utils.get(guild.roles, name="Verified")
         if not role:
-            role = await interaction.guild.create_role(name="Verified", color=discord.Color.blue())
+            # إنشاء رتبة Verified ومنحها صلاحية رؤية كل السكتارات
+            role = await guild.create_role(name="Verified", color=discord.Color.blue())
+            for cat in guild.categories:
+                if cat.name != "🔒 -- [ SECTOR 01 ] SYSTEM CORE" and cat.name != "⚙️ -- [ ADMIN CONSOLE ]":
+                    await cat.set_permissions(role, read_messages=True, connect=True)
         
         if role in interaction.user.roles:
             await interaction.response.send_message("[INFO] You are already verified!", ephemeral=True)
         else:
             await interaction.user.add_roles(role)
-            await interaction.response.send_message("[SUCCESS] Verification complete. Access granted.", ephemeral=True)
+            await interaction.response.send_message("[SUCCESS] Verification complete. System access granted!", ephemeral=True)
 
 
 class SelfRolesView(discord.ui.View):
@@ -137,7 +142,7 @@ class AdminControlView(discord.ui.View):
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('Fully Styled Enterprise Bot operational.')
+    print('Secure Enterprise Bot operational.')
 
 @bot.command(name="setup")
 @commands.has_permissions(administrator=True)
@@ -148,9 +153,9 @@ async def setup(ctx):
     except:
         pass
     
-    status_msg = await ctx.send("[INFO] Purging old layout and deploying styled server architecture...")
+    status_msg = await ctx.send("[INFO] Purging and deploying secure architecture...")
 
-    # 1. مسح وتنظيف السيرفر بالكامل من أي قنوات وأقسام قديمة لمنع التكرار
+    # 1. مسح كامل لتنظيف السيرفر من أي تكرار
     for channel in guild.channels:
         try:
             await channel.delete()
@@ -165,10 +170,19 @@ async def setup(ctx):
         except:
             pass
 
-    # 2. بناء الديزاين الكامل مع الأشكال والترتيب الاحترافي
+    # إعداد أذونات الإخفاء للعامة `@everyone`
+    invisible_overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False)
+    }
+
+    visible_overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=True, connect=True)
+    }
+
+    # 2. بناء الأقسام مع تطبيق الأذونات بدقة (غير المتحقق لا يرى شيئاً سوى السكتور الأول)
     
-    # SECTOR 01: SYSTEM CORE
-    cat1 = await guild.create_category("🔒 -- [ SECTOR 01 ] SYSTEM CORE")
+    # SECTOR 01: SYSTEM CORE (مرئي للجميع للتوثيق)
+    cat1 = await guild.create_category("🔒 -- [ SECTOR 01 ] SYSTEM CORE", overwrites=visible_overwrites)
     sec_dir = await guild.create_text_channel("📜-security-directives", category=cat1)
     await sec_dir.send("**[VERIFICATION PROTOCOL]**\nClick below to verify your identity and unlock system access:", view=VerificationView())
 
@@ -177,33 +191,28 @@ async def setup(ctx):
 
     await guild.create_text_channel("📡-system-broadcast", category=cat1)
 
-    # SECTOR 02: TERMINAL CHAT
-    cat2 = await guild.create_category("⚡ -- [ SECTOR 02 ] TERMINAL CHAT")
+    # باقي السكتارات (مخفية تماماً عن غير المتحققين)
+    cat2 = await guild.create_category("⚡ -- [ SECTOR 02 ] TERMINAL CHAT", overwrites=invisible_overwrites)
     conn_term = await guild.create_text_channel("🔗-connection-terminal", category=cat2)
     await conn_term.send("**[CONNECTION TERMINAL]**\nWelcome to the network. Use the ticketing system below for support:", view=TicketView())
-
     for ch_name in ["🌐-global-network", "💻-command-shell", "📦-payload-archive"]:
         await guild.create_text_channel(ch_name, category=cat2)
 
-    # SECTOR 03: SECURE NODES (Voice Rooms)
-    cat3 = await guild.create_category("🎧 -- [ SECTOR 03 ] SECURE NODES")
+    cat3 = await guild.create_category("🎧 -- [ SECTOR 03 ] SECURE NODES", overwrites=invisible_overwrites)
     for vc_name in ["🔒 ➔ [Node-01] Safe Zone", "🛡️ ➔ [Node-02] Operations Room", "⚡ ➔ [Node-03] Secure Alpha"]:
         await guild.create_voice_channel(vc_name, category=cat3)
 
-    # SECTOR 04: ROOM GENERATOR
-    cat4 = await guild.create_category("🎛️ -- [ SECTOR 04 ] ROOM GENERATOR")
+    cat4 = await guild.create_category("🎛️ -- [ SECTOR 04 ] ROOM GENERATOR", overwrites=invisible_overwrites)
     await guild.create_text_channel("🎛️-room-generator", category=cat4)
 
-    # SECTOR 05: DYNAMIC NOTES
-    await guild.create_category("📁 -- [ SECTOR 05 ] DYNAMIC NOTES")
+    await guild.create_category("📁 -- [ SECTOR 05 ] DYNAMIC NOTES", overwrites=invisible_overwrites)
 
-    # SECTOR 06: CONTROL & LOGS
-    cat6 = await guild.create_category("👁️ -- [ SECTOR 06 ] CONTROL & LOGS")
+    cat6 = await guild.create_category("👁️ -- [ SECTOR 06 ] CONTROL & LOGS", overwrites=invisible_overwrites)
     for ch_name in ["⚙️-room-control-hub", "📊-surveillance-logs"]:
         await guild.create_text_channel(ch_name, category=cat6)
 
-    # ADMIN CONSOLE
-    admin_cat = await guild.create_category("⚙️ -- [ ADMIN CONSOLE ]")
+    # ADMIN CONSOLE (للإدارة فقط)
+    admin_cat = await guild.create_category("⚙️ -- [ ADMIN CONSOLE ]", overwrites=invisible_overwrites)
     admin_ch = await guild.create_text_channel("🛠️-admin-console", category=admin_cat, overwrites={
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         guild.me: discord.PermissionOverwrite(read_messages=True)
@@ -211,7 +220,7 @@ async def setup(ctx):
     await admin_ch.send("**[ADMINISTRATIVE CONTROL PANEL]**\nManage emergency lockdown and system security states:", view=AdminControlView())
 
     try:
-        await status_msg.edit(content="[SUCCESS] Styled server architecture deployed successfully!")
+        await status_msg.edit(content="[SUCCESS] Secure architecture deployed! Unverified users can only see Sector 01.")
         await asyncio.sleep(4)
         await status_msg.delete()
     except:
