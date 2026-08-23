@@ -8,7 +8,6 @@ from contextlib import suppress
 import discord
 from aiohttp import web
 from discord import app_commands
-from discord.ext import commands
 from dotenv import load_dotenv
 
 from database import Database
@@ -23,9 +22,10 @@ INTENTS.guilds = True
 INTENTS.members = True
 
 
-class NexusBot(commands.Bot):
+class NexusBot(discord.Client):
     def __init__(self) -> None:
-        super().__init__(command_prefix="!", intents=INTENTS)
+        super().__init__(intents=INTENTS)
+        self.tree = app_commands.CommandTree(self)
         self.database = Database()
         self.web_runner: web.AppRunner | None = None
 
@@ -91,13 +91,14 @@ async def ensure_category(guild: discord.Guild, name: str, overwrites: dict, *le
 async def ensure_text(category: discord.CategoryChannel, name: str) -> discord.TextChannel:
     channel = discord.utils.get(category.text_channels, name=name)
     if channel is None:
-        channel = await category.guild.create_text_channel(name, category=category, sync_permissions=True, reason="Nexus setup")
+        # A channel created inside a category inherits that category's permissions.
+        channel = await category.guild.create_text_channel(name, category=category, reason="Nexus setup")
     return channel
 
 
 async def ensure_voice(category: discord.CategoryChannel, name: str) -> None:
     if not discord.utils.get(category.voice_channels, name=name):
-        await category.guild.create_voice_channel(name, category=category, sync_permissions=True, reason="Nexus setup")
+        await category.guild.create_voice_channel(name, category=category, reason="Nexus setup")
 
 
 async def ensure_panel(channel: discord.TextChannel, panel_key: str, embed: discord.Embed, view: discord.ui.View) -> None:
