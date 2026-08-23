@@ -2,25 +2,24 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from flask import Flask
 import threading
 
 # ---------------------------------------------------------------------------
-# 1. WEB SERVER DUMMY (لتجاوز مشكلة البورتات على Render Web Service)
+# 1. FLASK WEB SERVER (لإرضاء منصة Render ومنع إغلاق البورت)
 # ---------------------------------------------------------------------------
-class SimpleHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot is active and running!")
+app = Flask(__name__)
 
-def run_web_server():
+@app.route('/')
+def home():
+    return "Bot is running and active!"
+
+def run_flask():
     port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
-    server.serve_forever()
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
-# تشغيل السيرفر الوهمي في خلفية البت
-threading.Thread(target=run_web_server, daemon=True).start()
+# تشغيل خادم الويب في الخلفية بشكل مستقل تماماً
+threading.Thread(target=run_flask, daemon=True).start()
 
 # ---------------------------------------------------------------------------
 # 2. DISCORD BOT SETUP
@@ -78,40 +77,6 @@ class SelfRolesView(discord.ui.View):
             await interaction.user.add_roles(role)
             await interaction.response.send_message("[SUCCESS] Guest Node role granted instantly!", ephemeral=True)
 
-    @discord.ui.button(label="Security Officer (Admin Approval)", style=discord.ButtonStyle.danger, custom_id="role_security", emoji="🔒")
-    async def security_officer(self, interaction: discord.Interaction, button: discord.ui.Button):
-        admin_channel = discord.utils.get(interaction.guild.text_channels, name="admin-console")
-        if not admin_channel:
-            admin_channel = interaction.channel
-
-        class ApprovalView(discord.ui.View):
-            def __init__(self, member: discord.Member):
-                super().__init__(timeout=86400)
-                self.member = member
-
-            @discord.ui.button(label="Approve", style=discord.ButtonStyle.green, custom_id="approve_sec")
-            async def approve(self, inter: discord.Interaction, btn: discord.ui.Button):
-                if not inter.user.guild_permissions.administrator:
-                    return await inter.response.send_message("Only administrators can approve this.", ephemeral=True)
-                role = discord.utils.get(inter.guild.roles, name="Security Officer")
-                if not role:
-                    role = await inter.guild.create_role(name="Security Officer", color=discord.Color.red())
-                await self.member.add_roles(role)
-                await inter.response.edit_message(content=f"[APPROVED] Security Officer role granted to {self.member.mention} by {inter.user.mention}.", view=None)
-
-            @discord.ui.button(label="Deny", style=discord.ButtonStyle.red, custom_id="deny_sec")
-            async def deny(self, inter: discord.Interaction, btn: discord.ui.Button):
-                if not inter.user.guild_permissions.administrator:
-                    return await inter.response.send_message("Only administrators can deny this.", ephemeral=True)
-                await inter.response.edit_message(content=f"[DENIED] Security Officer request for {self.member.mention} denied by {inter.user.mention}.", view=None)
-
-        embed = discord.Embed(title="[PENDING] Security Clearance Request", color=discord.Color.orange())
-        embed.add_field(name="User", value=interaction.user.mention, inline=False)
-        embed.add_field(name="Requested Role", value="Security Officer", inline=False)
-        
-        await admin_channel.send(embed=embed, view=ApprovalView(interaction.user))
-        await interaction.response.send_message("[PENDING] Your request for Security Officer requires administrator approval and has been dispatched.", ephemeral=True)
-
 
 class TicketView(discord.ui.View):
     def __init__(self):
@@ -141,49 +106,10 @@ class TicketView(discord.ui.View):
         await interaction.response.send_message(f"[SUCCESS] Ticket created: {channel.mention}", ephemeral=True)
 
 
-class AdminControlView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="Lockdown", style=discord.ButtonStyle.danger, custom_id="admin_lock", emoji="🔒")
-    async def lockdown(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("Administrator permission required.", ephemeral=True)
-        for channel in interaction.guild.text_channels:
-            await channel.set_permissions(interaction.guild.default_role, send_messages=False)
-        await interaction.response.send_message("[ALERT] System Lockdown initiated. All text channels locked.", ephemeral=True)
-
-    @discord.ui.button(label="Unlock", style=discord.ButtonStyle.green, custom_id="admin_unlock", emoji="🔓")
-    async def unlock(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("Administrator permission required.", ephemeral=True)
-        for channel in interaction.guild.text_channels:
-            await channel.set_permissions(interaction.guild.default_role, send_messages=True)
-        await interaction.response.send_message("[SUCCESS] System Unlocked. Normal operations resumed.", ephemeral=True)
-
-    @discord.ui.button(label="Create Broadcast", style=discord.ButtonStyle.primary, custom_id="admin_broadcast", emoji="📢")
-    async def broadcast(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("Administrator permission required.", ephemeral=True)
-        
-        class BroadcastModal(discord.ui.Modal, title="System Broadcast"):
-            message = discord.ui.TextInput(label="Broadcast Message", style=discord.TextStyle.paragraph, placeholder="Enter system announcement...")
-            
-            async def on_submit(self, inter: discord.Interaction):
-                broadcast_channel = discord.utils.get(inter.guild.text_channels, name="system-broadcast")
-                if broadcast_channel:
-                    await broadcast_channel.send(f"@everyone\n**[SYSTEM BROADCAST]**\n{self.message.value}")
-                    await inter.response.send_message("[SUCCESS] Broadcast sent successfully.", ephemeral=True)
-                else:
-                    await inter.response.send_message("[ERROR] Channel #system-broadcast not found.", ephemeral=True)
-
-        await interaction.response.send_modal(BroadcastModal())
-
-
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('System operational and web port bound successfully.')
+    print('Bot is fully operational with Flask background server.')
 
 @bot.command(name="setup")
 @commands.has_permissions(administrator=True)
@@ -208,10 +134,6 @@ async def setup(ctx):
         role_guide = await guild.create_text_channel("role-hierarchy-guide", category=cat1)
         await role_guide.send("**[ENTERPRISE SELF-ROLES CLEARANCE SYSTEM]**\nSelect your desired operational clearance role using the interactive buttons below:", view=SelfRolesView())
 
-    sys_bc = discord.utils.get(cat1.text_channels, name="system-broadcast")
-    if not sys_bc:
-        sys_bc = await guild.create_text_channel("system-broadcast", category=cat1)
-
     cat2 = discord.utils.get(guild.categories, name="[SECTOR 02] TERMINAL CHAT")
     if not cat2:
         cat2 = await guild.create_category("[SECTOR 02] TERMINAL CHAT")
@@ -221,24 +143,11 @@ async def setup(ctx):
         conn_term = await guild.create_text_channel("connection-terminal", category=cat2)
         await conn_term.send("**[CONNECTION TERMINAL]**\nWelcome to the network. Use the ticketing system below for support.", view=TicketView())
 
-    admin_cat = discord.utils.get(guild.categories, name="[ADMIN CONSOLE]")
-    if not admin_cat:
-        admin_cat = await guild.create_category("[ADMIN CONSOLE]")
-    
-    admin_ch = discord.utils.get(admin_cat.text_channels, name="admin-console")
-    if not admin_ch:
-        admin_ch = await guild.create_text_channel("admin-console", category=admin_cat, overwrites={
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            guild.me: discord.PermissionOverwrite(read_messages=True)
-        })
-        await admin_ch.send("**[ADMINISTRATIVE CONTROL PANEL]**\nManage emergency lockdown, unlock, and system broadcasts.", view=AdminControlView())
-
-    await ctx.send("[SUCCESS] Advanced server infrastructure setup complete!", delete_after=10)
+    await ctx.send("[SUCCESS] Server infrastructure setup complete!", delete_after=10)
 
 @bot.command(name="clear")
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int = 10):
     await ctx.channel.purge(limit=amount + 1)
-    msg = await ctx.send(f"[SUCCESS] Purged {amount} messages.", delete_after=5)
 
 bot.run(os.getenv("DISCORD_TOKEN"))
