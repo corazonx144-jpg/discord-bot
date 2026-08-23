@@ -75,7 +75,14 @@ class StageTransitionView(discord.ui.View):
                 f"{GRN}[AUTH]{RST}   Identity verified for {interaction.user.mention}\n"
                 f"{CYN}[CMD]{RST}    Select operational clearance below\n\n"
                 f"{WHT}  [1] {YLW}⚡ Elite Agent{WHT}  — Full system access{RST}\n"
-                f"{WHT}  [2] {DIM}👤 Guest Node{WHT}   — Limited read-only{RST}",
+                f"{WHT}  [2] {DIM}👤 Guest Node{WHT}   — Limited read-only{RST}\n"
+                f"{WHT}  [3] {GRN}🛡️ Support Team{WHT} — Ticket management{RST}\n"
+                f"{WHT}  [4] {BLU}💻 Developer{WHT}    — Code & bot dev{RST}\n"
+                f"{WHT}  [5] {YLW}🔨 Moderator{WHT}    — Kick, mute, warn{RST}\n"
+                f"{WHT}  [6] {MAG}👑 VIP{WHT}          — Premium lounge{RST}\n"
+                f"{WHT}  [7] {RED}📺 Streamer{WHT}     — Content creator{RST}\n"
+                f"{WHT}  [8] {CYN}🎨 Artist{WHT}       — Visual gallery{RST}\n"
+                f"{WHT}  [9] {MAG}🎵 Musician{WHT}     — Music lab{RST}",
                 colour=0x7C3AED,
                 member=interaction.user,
             )
@@ -244,7 +251,7 @@ class RoleView(discord.ui.View):
         super().__init__(timeout=None)
         self.database = database
 
-    async def request(self, interaction: discord.Interaction, role_name: str) -> None:
+    async def _check_and_request(self, interaction: discord.Interaction, role_name: str) -> None:
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             return await interaction.response.send_message("Server only.", ephemeral=True)
         verified = discord.utils.get(interaction.guild.roles, name="Verified")
@@ -278,11 +285,39 @@ class RoleView(discord.ui.View):
 
     @discord.ui.button(label="Elite Agent", emoji="⚡", style=discord.ButtonStyle.primary, custom_id="nexus:role:elite")
     async def elite(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
-        await self.request(interaction, "Elite Agent")
+        await self._check_and_request(interaction, "Elite Agent")
 
     @discord.ui.button(label="Guest Node", emoji="👤", style=discord.ButtonStyle.secondary, custom_id="nexus:role:guest")
     async def guest(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
-        await self.request(interaction, "Guest Node")
+        await self._check_and_request(interaction, "Guest Node")
+
+    @discord.ui.button(label="Support Team", emoji="🛡️", style=discord.ButtonStyle.success, custom_id="nexus:role:support")
+    async def support(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
+        await self._check_and_request(interaction, "Support Team")
+
+    @discord.ui.button(label="Developer", emoji="💻", style=discord.ButtonStyle.primary, custom_id="nexus:role:dev")
+    async def developer(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
+        await self._check_and_request(interaction, "Developer")
+
+    @discord.ui.button(label="Moderator", emoji="🔨", style=discord.ButtonStyle.danger, custom_id="nexus:role:mod")
+    async def moderator(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
+        await self._check_and_request(interaction, "Moderator")
+
+    @discord.ui.button(label="VIP", emoji="👑", style=discord.ButtonStyle.primary, row=1, custom_id="nexus:role:vip")
+    async def vip(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
+        await self._check_and_request(interaction, "VIP")
+
+    @discord.ui.button(label="Streamer", emoji="📺", style=discord.ButtonStyle.secondary, row=1, custom_id="nexus:role:streamer")
+    async def streamer(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
+        await self._check_and_request(interaction, "Streamer")
+
+    @discord.ui.button(label="Artist", emoji="🎨", style=discord.ButtonStyle.primary, row=1, custom_id="nexus:role:artist")
+    async def artist(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
+        await self._check_and_request(interaction, "Artist")
+
+    @discord.ui.button(label="Musician", emoji="🎵", style=discord.ButtonStyle.secondary, row=1, custom_id="nexus:role:musician")
+    async def musician(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
+        await self._check_and_request(interaction, "Musician")
 
 
 class RoomPanelView(discord.ui.View):
