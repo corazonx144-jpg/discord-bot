@@ -28,7 +28,6 @@ INTENTS.message_content = True  # Required for Slsetup, Slclear, and Slrebuild.
 class NexusBot(commands.Bot):
     def __init__(self) -> None:
         super().__init__(command_prefix="Sl", case_insensitive=True, intents=INTENTS, help_command=None)
-        self.tree = app_commands.CommandTree(self)
         self.database = Database()
         self.web_runner: web.AppRunner | None = None
         self.room_expiry_task: asyncio.Task | None = None
