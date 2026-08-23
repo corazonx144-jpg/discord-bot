@@ -5,6 +5,7 @@ import logging
 import os
 import time
 from contextlib import suppress
+from datetime import UTC, datetime
 
 import discord
 from aiohttp import web
@@ -22,7 +23,6 @@ from views import (
     TicketView,
     VerificationView,
     hx_embed,
-    run_arrival_scan,
 )
 
 load_dotenv()
@@ -43,6 +43,7 @@ WHT = "\u001b[1;37m"
 BLK = "\u001b[0;30m"
 RST = "\u001b[0m"
 DIM = "\u001b[2m"
+MAG = "\u001b[1;35m"
 
 
 class NexusBot(commands.Bot):
@@ -168,9 +169,30 @@ def _add_role_overwrite(base: dict, role: discord.Role) -> dict:
     return o
 
 
+def arrival_terminal_embed(guild: discord.Guild) -> discord.Embed:
+    """Ultra-professional hacker terminal for the arrival panel."""
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+    lines = (
+        f"{CYN}[SYS]{RST}    NEXUS GATEWAY v4.0.1 — {guild.name}\n"
+        f"{CYN}[TIME]{RST}   {ts}\n"
+        f"{GRN}[OK]{RST}     Secure gateway online\n"
+        f"{GRN}[OK]{RST}     Biometric scanner active\n"
+        f"{YLW}[WARN]{RST}  Clearance: PENDING APPROVAL\n"
+        f"{CYN}[>>]{RST}    Execute verification protocol\n\n"
+        f"{WHT}╔══════════════════════════════════════╗{RST}\n"
+        f"{WHT}║  01 · REQUEST ACCESS                ║{RST}\n"
+        f"{WHT}║      Submit identity for admin rev. ║{RST}\n"
+        f"{WHT}║                                     ║{RST}\n"
+        f"{WHT}║  02 · AWAIT CLEARANCE               ║{RST}\n"
+        f"{WHT}║      No automatic role grants       ║{RST}\n"
+        f"{WHT}╚══════════════════════════════════════╝{RST}\n\n"
+        f"{DIM}[NOTE]{RST}  All traffic is logged and encrypted."
+    )
+    return hx_embed("NEXUS // ARRIVAL TERMINAL", lines, colour=0x22D3EE)
+
+
 async def build_layout(guild: discord.Guild) -> None:
-    """Single source of truth for the entire server layout.
-    Detects existing categories/channels by name (including legacy names) and repairs them."""
+    """Single source of truth for the entire server layout."""
     me = guild.me
     if not me:
         raise RuntimeError("Bot member unavailable")
@@ -283,14 +305,7 @@ async def build_layout(guild: discord.Guild) -> None:
     await ensure_text(control, "🔐-approval-queue")
 
     # ── Panels ──
-    await ensure_panel(arrival, "arrival", hx_embed("NEXUS // ARRIVAL TERMINAL",
-        f"{GRN}[OK]{RST}   Secure gateway online\n"
-        f"{YLW}[!]{RST}    Clearance: PENDING APPROVAL\n"
-        f"{CYN}[>>]{RST}   Execute verification protocol\n\n"
-        f"{WHT}01 · REQUEST ACCESS{RST}\n"
-        f"{DIM}     Submit identity for admin review{RST}\n\n"
-        f"{WHT}02 · AWAIT CLEARANCE{RST}\n"
-        f"{DIM}     No automatic role grants{RST}", colour=0x22D3EE), VerificationView())
+    await ensure_panel(arrival, "arrival", arrival_terminal_embed(guild), VerificationView())
 
     await ensure_panel(verify, "verification", hx_embed("ACCESS // STAGE 01",
         f"{CYN}[INFO]{RST}  Transmit an access request.\n"
@@ -309,7 +324,6 @@ async def build_layout(guild: discord.Guild) -> None:
 
 
 async def wipe_layout(guild: discord.Guild) -> None:
-    """Owner-authorized destructive reset."""
     for channel in [c for c in list(guild.channels) if not isinstance(c, discord.CategoryChannel)]:
         with suppress(discord.Forbidden, discord.NotFound):
             await channel.delete(reason="Owner-authorized Nexus rebuild")
@@ -330,21 +344,29 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_member_join(member: discord.Member) -> None:
-    """Track new member stage. Scan goes to DM so arrival-terminal stays clean."""
+    """Send a personalized hacker terminal DM to the new member."""
     await bot.database.set_member_stage(member.guild.id, member.id, "arrival")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     try:
         embed = hx_embed(
-            "NEXUS // INCOMING SIGNAL",
-            f"{CYN}[SCAN]{RST}  Biometric signature detected\n"
-            f"{GRN}[ID]{RST}     {member.mention}\n"
-            f"{YLW}[ALERT]{RST}  Unverified entity in Sector 01\n"
-            f"{RED}[ACTION]{RST}  Go to ⌁-arrival-terminal and initiate verification",
+            f"WELCOME  {member.name.upper()}",
+            f"{CYN}[SYS]{RST}     NEXUS GATEWAY v4.0.1\n"
+            f"{CYN}[TIME]{RST}    {ts}\n"
+            f"{CYN}[SERVER]{RST}  {member.guild.name}\n"
+            f"{GRN}[ID]{RST}      {member.mention}  `UID:{member.id}`\n"
+            f"{YLW}[STATUS]{RST}  UNVERIFIED — SECTOR 01\n"
+            f"{RED}[ALERT]{RST}   Biometric lock active\n\n"
+            f"{WHT}╔══════════════════════════════════════╗{RST}\n"
+            f"{WHT}║  PROTOCOL REQUIRED                  ║{RST}\n"
+            f"{WHT}║  Navigate to ⌁-arrival-terminal    ║{RST}\n"
+            f"{WHT}║  and execute VERIFY.EXE            ║{RST}\n"
+            f"{WHT}╚══════════════════════════════════════╝{RST}",
             colour=0xFF4444,
             member=member,
         )
         await member.send(embed=embed)
     except discord.Forbidden:
-        pass  # DMs disabled — arrival-terminal panel is still visible
+        pass
 
 
 @bot.event
@@ -390,11 +412,13 @@ async def clear(interaction: discord.Interaction, amount: app_commands.Range[int
 
 @bot.tree.command(name="status", description="Show the bot\'s current operational status.")
 async def status(interaction: discord.Interaction) -> None:
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     embed = hx_embed(
         "NEXUS STATUS",
         f"{GRN}[OK]{RST}   Latency: `{round(bot.latency * 1000)} ms`\n"
         f"{GRN}[OK]{RST}   Database: `online`\n"
         f"{GRN}[OK]{RST}   Persistent controls: `armed`\n"
+        f"{CYN}[TIME]{RST}  {ts}\n"
         f"{CYN}[INFO]{RST}  Sectors: 8  |  Roles: 10  |  Nodes: 3",
         colour=0x22D3EE,
     )
