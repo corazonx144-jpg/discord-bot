@@ -408,11 +408,7 @@ async def on_member_join(member: discord.Member) -> None:
         sep_embed = discord.Embed(description=f"```ansi\n{sep}\n```", colour=0x22D3EE)
         sep_msg = await channel.send(embed=sep_embed)
 
-        # 2. Typing effect
-        async with channel.typing():
-            await asyncio.sleep(1.5)
-
-        # 3. Main scan embed with @mention inside
+        # 2. Main scan embed with @mention inside
         scan_lines = (
             f"{CYN}[SCAN]{RST}   Biometric lock engaged\n"
             f"{GRN}[TARGET]{RST} {member.mention}\n"
