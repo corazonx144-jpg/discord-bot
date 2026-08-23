@@ -182,40 +182,47 @@ async def setup(ctx):
     except:
         pass
     
-    # رسالة تنبيه للمستخدم بأن عملية إعادة التنظيم تبدأ
-    status_msg = await ctx.send("[INFO] Rebuilding server architecture and refreshing layout...")
+    status_msg = await ctx.send("[INFO] Purging old architecture and rebuilding professional server layout...")
 
-    # 1. حذف القنوات والأقسام القديمة المرتبطة بالنظام لتنظيف السيرفر تماماً
+    # 1. حذف جذري لكل الأقسام والقنوات القديمة التي تبدأ بـ [SECTOR أو [ADMIN
     for channel in guild.channels:
-        if channel.name in ["security-directives", "role-hierarchy-guide", "connection-terminal", "admin-console", 
-                            "[SECTOR 01] SYSTEM CORE", "[SECTOR 02] TERMINAL CHAT", "[ADMIN CONSOLE]"]:
+        if any(keyword in channel.name.upper() for keyword in ["SECTOR", "ADMIN", "SECURITY", "CONNECTION", "COMMAND", "PAYLOAD", "ROOM", "SURVEILLANCE"]):
             try:
                 await channel.delete()
-            except:
-                pass
+                await asyncio.sleep(0.5) # تجنب حدود سبام ديسكورد
+            except Exception as e:
+                print(f"Could not delete {channel.name}: {e}")
 
-    # 2. إنشاء الهيكلة الاحترافية الجديدة
-    cat1 = await guild.create_category("[SECTOR 01] SYSTEM CORE")
+    for category in guild.categories:
+        if any(keyword in category.name.upper() for keyword in ["SECTOR", "ADMIN"]):
+            try:
+                await category.delete()
+                await asyncio.sleep(0.5)
+            except Exception as e:
+                print(f"Could not delete category {category.name}: {e}")
+
+    # 2. بناء الأقسام والقنوات الجديدة كلياً بأسلوب احترافي وأشكال منظمة
+    cat1 = await guild.create_category("🔒 -- [ SECTOR 01 ] SYSTEM CORE")
     
-    sec_dir = await guild.create_text_channel("security-directives", category=cat1)
+    sec_dir = await guild.create_text_channel("📜-security-directives", category=cat1)
     await sec_dir.send("**[VERIFICATION PROTOCOL]**\nClick below to verify your identity and unlock system access:", view=VerificationView())
 
-    role_guide = await guild.create_text_channel("role-hierarchy-guide", category=cat1)
+    role_guide = await guild.create_text_channel("🛡️-role-hierarchy-guide", category=cat1)
     await role_guide.send("**[ENTERPRISE SELF-ROLES CLEARANCE SYSTEM]**\nSelect your desired operational clearance role using the interactive buttons below:", view=SelfRolesView())
 
-    cat2 = await guild.create_category("[SECTOR 02] TERMINAL CHAT")
-    conn_term = await guild.create_text_channel("connection-terminal", category=cat2)
+    cat2 = await guild.create_category("⚡ -- [ SECTOR 02 ] TERMINAL CHAT")
+    conn_term = await guild.create_text_channel("🔗-connection-terminal", category=cat2)
     await conn_term.send("**[CONNECTION TERMINAL]**\nWelcome to the network. Use the ticketing system below for support:", view=TicketView())
 
-    admin_cat = await guild.create_category("[ADMIN CONSOLE]")
-    admin_ch = await guild.create_text_channel("admin-console", category=admin_cat, overwrites={
+    admin_cat = await guild.create_category("⚙️ -- [ ADMIN CONSOLE ]")
+    admin_ch = await guild.create_text_channel("🛠️-admin-console", category=admin_cat, overwrites={
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         guild.me: discord.PermissionOverwrite(read_messages=True)
     })
     await admin_ch.send("**[ADMINISTRATIVE CONTROL PANEL]**\nManage emergency lockdown and system security states:", view=AdminControlView())
 
     try:
-        await status_msg.edit(content="[SUCCESS] Server architecture successfully reset and deployed with professional UI components!")
+        await status_msg.edit(content="[SUCCESS] Server architecture completely purged and rebuilt with professional UI components!")
         await asyncio.sleep(5)
         await status_msg.delete()
     except:
