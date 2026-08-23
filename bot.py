@@ -421,7 +421,7 @@ async def on_member_join(member: discord.Member) -> None:
         )
         scan_embed = cmd_embed(f"WELCOME  {member.name.upper()}", scan_lines, colour=0xFF4444)
         scan_embed.set_thumbnail(url=member.display_avatar.url)
-        scan_msg = await channel.send(content=member.mention, embed=scan_embed)
+        scan_msg = await channel.send(content=member.mention, embed=scan_embed, view=VerificationView())
 
         # 4. Scan stays permanent — no auto-delete
 
