@@ -427,11 +427,7 @@ async def on_member_join(member: discord.Member) -> None:
         scan_embed.set_thumbnail(url=member.display_avatar.url)
         scan_msg = await channel.send(content=member.mention, embed=scan_embed)
 
-        # 4. Auto-delete after 30s
-        await asyncio.sleep(30)
-        with suppress(discord.NotFound):
-            await sep_msg.delete()
-            await scan_msg.delete()
+        # 4. Scan stays permanent — no auto-delete
 
 
 @bot.event
