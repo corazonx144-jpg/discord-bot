@@ -8,7 +8,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"CyberKernel Enterprise Core v19.0 Active.")
+        self.wfile.write(b"CyberKernel Enterprise Core v19.1 Active.")
         
     def do_HEAD(self):
         self.send_response(200)
@@ -33,7 +33,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"[-] CYBERKERNEL CORE ONLINE: {bot.user.name}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.0] | Interactive UI Active"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="[SYSTEM KERNEL v19.1] | Interactive UI Active"))
 
 # --- نافذة منبثقة (Modal) لإنشاء الروم الكتابي ---
 class CreateTextModal(discord.ui.Modal, title="Initialize Text Node"):
@@ -53,9 +53,9 @@ class CreateTextModal(discord.ui.Modal, title="Initialize Text Node"):
 
     async def on_submit(self, interaction: discord.Interaction):
         guild = interaction.guild
-        category = discord.utils.get(guild.categories, name="📂 ── [ SECTOR 04 ] DYNAMIC NODES ── 📂")
+        category = discord.utils.get(guild.categories, name="📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
         if not category:
-            category = await guild.create_category("📂 ── [ SECTOR 04 ] DYNAMIC NODES ── 📂")
+            category = await guild.create_category("📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
 
         is_hidden = self.visibility.value.strip().lower() == "hidden"
         
@@ -89,9 +89,9 @@ class CreateVoiceModal(discord.ui.Modal, title="Initialize Voice Node"):
 
     async def on_submit(self, interaction: discord.Interaction):
         guild = interaction.guild
-        category = discord.utils.get(guild.categories, name="📂 ── [ SECTOR 04 ] DYNAMIC NODES ── 📂")
+        category = discord.utils.get(guild.categories, name="📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
         if not category:
-            category = await guild.create_category("📂 ── [ SECTOR 04 ] DYNAMIC NODES ── 📂")
+            category = await guild.create_category("📂 ── [ SECTOR 05 ] DYNAMIC NODES ── 📂")
 
         is_hidden = self.visibility.value.strip().lower() == "hidden"
         
@@ -124,4 +124,4 @@ class RoomGeneratorView(discord.ui.View):
 @commands.has_permissions(administrator=True)
 async def setup(ctx):
     guild = ctx.guild
-    status_msg = await ctx.send("```prolog\n[INIT] Deploying CyberKernel Enterprise Architecture v19.0 (Interactive UI)...\n[+] Resetting structure & provisioning dynamic interfaces...\n
+    status_msg = await ctx.send("```prolog\n[INIT] Deploying CyberKernel Enterprise Architecture v19.1...\n[+] Resetting structure & provisioning dynamic interfaces...\n
