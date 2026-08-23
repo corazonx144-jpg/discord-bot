@@ -2,7 +2,29 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
 
+# ---------------------------------------------------------------------------
+# 1. WEB SERVER DUMMY (لتجاوز مشكلة البورتات على Render Web Service)
+# ---------------------------------------------------------------------------
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is active and running!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
+    server.serve_forever()
+
+# تشغيل السيرفر الوهمي في خلفية البت
+threading.Thread(target=run_web_server, daemon=True).start()
+
+# ---------------------------------------------------------------------------
+# 2. DISCORD BOT SETUP
+# ---------------------------------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -10,10 +32,6 @@ intents.members = True
 intents.voice_states = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-
-# ---------------------------------------------------------------------------
-# VIEWS & INTERACTIVE COMPONENTS
-# ---------------------------------------------------------------------------
 
 class VerificationView(discord.ui.View):
     def __init__(self):
@@ -162,14 +180,10 @@ class AdminControlView(discord.ui.View):
         await interaction.response.send_modal(BroadcastModal())
 
 
-# ---------------------------------------------------------------------------
-# BOT EVENTS & COMMANDS
-# ---------------------------------------------------------------------------
-
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('System operational with advanced features.')
+    print('System operational and web port bound successfully.')
 
 @bot.command(name="setup")
 @commands.has_permissions(administrator=True)
@@ -219,7 +233,7 @@ async def setup(ctx):
         })
         await admin_ch.send("**[ADMINISTRATIVE CONTROL PANEL]**\nManage emergency lockdown, unlock, and system broadcasts.", view=AdminControlView())
 
-    await ctx.send("[SUCCESS] Advanced server infrastructure setup complete with Button-based roles, Verification, Tickets, and Admin Control Panel!", delete_after=10)
+    await ctx.send("[SUCCESS] Advanced server infrastructure setup complete!", delete_after=10)
 
 @bot.command(name="clear")
 @commands.has_permissions(manage_messages=True)
@@ -227,5 +241,4 @@ async def clear(ctx, amount: int = 10):
     await ctx.channel.purge(limit=amount + 1)
     msg = await ctx.send(f"[SUCCESS] Purged {amount} messages.", delete_after=5)
 
-# التشغيل باستخدام DISCORD_TOKEN الموجود في إعدادات Render
 bot.run(os.getenv("DISCORD_TOKEN"))
