@@ -32,7 +32,7 @@ intents.voice_states = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ---------------------------------------------------------------------------
-# INTERACTIVE VIEWS & BUTTONS (Bulletproof Response)
+# INTERACTIVE VIEWS & BUTTONS
 # ---------------------------------------------------------------------------
 
 class VerificationView(discord.ui.View):
@@ -154,7 +154,7 @@ async def on_ready():
     bot.add_view(TicketView())
     bot.add_view(AdminControlView())
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('Strict Security Bot operational.')
+    print('Anti-Rate-Limit Security Bot operational.')
 
 @bot.command(name="setup")
 @commands.has_permissions(administrator=True)
@@ -165,20 +165,20 @@ async def setup(ctx):
     except:
         pass
     
-    status_msg = await ctx.send("[INFO] Purging server and applying strict security boundaries...")
+    status_msg = await ctx.send("[INFO] Safe purging and rebuilding architecture (Anti-Rate-Limit active)...")
 
-    # 1. مسح كامل وتنظيف السيرفر
+    # 1. مسح القنوات والأقسام ببطء آمن لمنع الحظر المؤقت من ديسكورد
     for channel in guild.channels:
         try:
             await channel.delete()
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.5)
         except:
             pass
 
     for category in guild.categories:
         try:
             await category.delete()
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.5)
         except:
             pass
 
@@ -187,7 +187,6 @@ async def setup(ctx):
     if not verified_role:
         verified_role = await guild.create_role(name="Verified", color=discord.Color.blue())
 
-    # أذونات صارمة: `@everyone` ممنوع من رؤية الأقسام المحمية نهائياً
     public_overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
         guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
@@ -199,48 +198,69 @@ async def setup(ctx):
         guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, view_channel=True)
     }
 
-    # 3. بناء الأقسام مع فرض مزامنة الأذونات (sync_permissions=True) لضمان عدم ظهور أي روم بالخطأ
+    await asyncio.sleep(1)
+
+    # 3. بناء الأقسام خطوة بخطوة مع فترات راحة آمنة لمنع التوقف
     
-    # SECTOR 01: SYSTEM CORE (مرئي للجميع)
+    # SECTOR 01
     cat1 = await guild.create_category("🔒 -- [ SECTOR 01 ] SYSTEM CORE", overwrites=public_overwrites)
+    await asyncio.sleep(0.3)
     sec_dir = await guild.create_text_channel("📜-security-directives", category=cat1, sync_permissions=True)
     await sec_dir.send("**[VERIFICATION PROTOCOL]**\nClick below to verify your identity and unlock system access:", view=VerificationView())
+    await asyncio.sleep(0.3)
 
     role_guide = await guild.create_text_channel("🛡️-role-hierarchy-guide", category=cat1, sync_permissions=True)
     await role_guide.send("**[ENTERPRISE SELF-ROLES CLEARANCE SYSTEM]**\nSelect your desired operational clearance role using the interactive buttons below:", view=SelfRolesView())
+    await asyncio.sleep(0.3)
 
     await guild.create_text_channel("📡-system-broadcast", category=cat1, sync_permissions=True)
+    await asyncio.sleep(0.5)
 
-    # الأقسام المحمية تماماً (مخفية تماماً عن الحسابات العادية مثل Ryuu لحين الضغط على التحقق)
+    # SECTOR 02
     cat2 = await guild.create_category("⚡ -- [ SECTOR 02 ] TERMINAL CHAT", overwrites=protected_overwrites)
+    await asyncio.sleep(0.3)
     conn_term = await guild.create_text_channel("🔗-connection-terminal", category=cat2, sync_permissions=True)
     await conn_term.send("**[CONNECTION TERMINAL]**\nWelcome to the network. Use the ticketing system below for support:", view=TicketView())
+    await asyncio.sleep(0.3)
     for ch_name in ["🌐-global-network", "💻-command-shell", "📦-payload-archive"]:
         await guild.create_text_channel(ch_name, category=cat2, sync_permissions=True)
+        await asyncio.sleep(0.3)
 
+    # SECTOR 03
     cat3 = await guild.create_category("🎧 -- [ SECTOR 03 ] SECURE NODES", overwrites=protected_overwrites)
+    await asyncio.sleep(0.3)
     for vc_name in ["🔒 ➔ [Node-01] Safe Zone", "🛡️ ➔ [Node-02] Operations Room", "⚡ ➔ [Node-03] Secure Alpha"]:
         await guild.create_voice_channel(vc_name, category=cat3, sync_permissions=True)
+        await asyncio.sleep(0.3)
 
+    # SECTOR 04
     cat4 = await guild.create_category("🎛️ -- [ SECTOR 04 ] ROOM GENERATOR", overwrites=protected_overwrites)
+    await asyncio.sleep(0.3)
     await guild.create_text_channel("🎛️-room-generator", category=cat4, sync_permissions=True)
+    await asyncio.sleep(0.3)
 
+    # SECTOR 05
     await guild.create_category("📁 -- [ SECTOR 05 ] DYNAMIC NOTES", overwrites=protected_overwrites)
+    await asyncio.sleep(0.3)
 
+    # SECTOR 06
     cat6 = await guild.create_category("👁️ -- [ SECTOR 06 ] CONTROL & LOGS", overwrites=protected_overwrites)
+    await asyncio.sleep(0.3)
     for ch_name in ["⚙️-room-control-hub", "📊-surveillance-logs"]:
         await guild.create_text_channel(ch_name, category=cat6, sync_permissions=True)
+        await asyncio.sleep(0.3)
 
     # ADMIN CONSOLE
     admin_cat = await guild.create_category("⚙️ -- [ ADMIN CONSOLE ]", overwrites={
         guild.default_role: discord.PermissionOverwrite(read_messages=False, view_channel=False),
         guild.me: discord.PermissionOverwrite(read_messages=True, view_channel=True)
     })
+    await asyncio.sleep(0.3)
     admin_ch = await guild.create_text_channel("🛠️-admin-console", category=admin_cat, sync_permissions=True)
     await admin_ch.send("**[ADMINISTRATIVE CONTROL PANEL]**\nManage emergency lockdown and system security states:", view=AdminControlView())
 
     try:
-        await status_msg.edit(content="[SUCCESS] Strict security boundaries applied! Unverified users are completely locked out.")
+        await status_msg.edit(content="[SUCCESS] All sectors and security boundaries successfully deployed!")
         await asyncio.sleep(4)
         await status_msg.delete()
     except:
