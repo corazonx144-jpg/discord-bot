@@ -49,7 +49,7 @@ class VerificationView(discord.ui.View):
             await interaction.response.send_message("[INFO] You are already verified!", ephemeral=True)
         else:
             await interaction.user.add_roles(role)
-            await interaction.response.send_message("[SUCCESS] Verification complete. Access granted.", ephemeral=True)
+            await interaction.response.send_message("[SUCCESS] Verification complete. Access granted to system sectors.", ephemeral=True)
 
 
 class SelfRolesView(discord.ui.View):
@@ -80,40 +80,6 @@ class SelfRolesView(discord.ui.View):
             await interaction.user.add_roles(role)
             await interaction.response.send_message("[SUCCESS] Guest Node role granted!", ephemeral=True)
 
-    @discord.ui.button(label="Security Officer", style=discord.ButtonStyle.danger, custom_id="role_security", emoji="🔒")
-    async def security_officer(self, interaction: discord.Interaction, button: discord.ui.Button):
-        admin_channel = discord.utils.get(interaction.guild.text_channels, name="admin-console")
-        if not admin_channel:
-            admin_channel = interaction.channel
-
-        class ApprovalView(discord.ui.View):
-            def __init__(self, member: discord.Member):
-                super().__init__(timeout=86400)
-                self.member = member
-
-            @discord.ui.button(label="Approve", style=discord.ButtonStyle.green, custom_id="approve_sec")
-            async def approve(self, inter: discord.Interaction, btn: discord.ui.Button):
-                if not inter.user.guild_permissions.administrator:
-                    return await inter.response.send_message("Only administrators can approve this.", ephemeral=True)
-                role = discord.utils.get(inter.guild.roles, name="Security Officer")
-                if not role:
-                    role = await inter.guild.create_role(name="Security Officer", color=discord.Color.red())
-                await self.member.add_roles(role)
-                await inter.response.edit_message(content=f"[APPROVED] Security Officer role granted to {self.member.mention}.", view=None)
-
-            @discord.ui.button(label="Deny", style=discord.ButtonStyle.red, custom_id="deny_sec")
-            async def deny(self, inter: discord.Interaction, btn: discord.ui.Button):
-                if not inter.user.guild_permissions.administrator:
-                    return await inter.response.send_message("Only administrators can deny this.", ephemeral=True)
-                await inter.response.edit_message(content=f"[DENIED] Security Officer request for {self.member.mention} denied.", view=None)
-
-        embed = discord.Embed(title="[PENDING] Security Clearance Request", color=discord.Color.orange())
-        embed.add_field(name="User", value=interaction.user.mention, inline=False)
-        embed.add_field(name="Requested Role", value="Security Officer", inline=False)
-        
-        await admin_channel.send(embed=embed, view=ApprovalView(interaction.user))
-        await interaction.response.send_message("[PENDING] Request sent to administrators.", ephemeral=True)
-
 
 class TicketView(discord.ui.View):
     def __init__(self):
@@ -122,7 +88,7 @@ class TicketView(discord.ui.View):
     @discord.ui.button(label="Open Support Ticket", style=discord.ButtonStyle.success, custom_id="open_ticket", emoji="🎫")
     async def open_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         guild = interaction.guild
-        category = discord.utils.get(guild.categories, name="[SECTOR 02] TERMINAL CHAT")
+        category = discord.utils.get(guild.categories, name="-- [ Sector 02 ] Terminal Chat")
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
@@ -139,7 +105,7 @@ class TicketView(discord.ui.View):
                 await asyncio.sleep(3)
                 await inter.channel.delete()
 
-        await channel.send(f"Welcome {interaction.user.mention}! Support staff will assist you.", view=CloseTicketView())
+        await channel.send(f"Welcome {interaction.user.mention}! Support staff will assist you shortly.", view=CloseTicketView())
         await interaction.response.send_message(f"[SUCCESS] Ticket created: {channel.mention}", ephemeral=True)
 
 
@@ -147,7 +113,7 @@ class AdminControlView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Lockdown", style=discord.ButtonStyle.danger, custom_id="admin_lock", emoji="🔒")
+    @discord.ui.button(label="System Lockdown", style=discord.ButtonStyle.danger, custom_id="admin_lock", emoji="🔒")
     async def lockdown(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.user.guild_permissions.administrator:
             return await interaction.response.send_message("Administrator permission required.", ephemeral=True)
@@ -155,7 +121,7 @@ class AdminControlView(discord.ui.View):
             await channel.set_permissions(interaction.guild.default_role, send_messages=False)
         await interaction.response.send_message("[ALERT] System Lockdown initiated.", ephemeral=True)
 
-    @discord.ui.button(label="Unlock", style=discord.ButtonStyle.green, custom_id="admin_unlock", emoji="🔓")
+    @discord.ui.button(label="System Unlock", style=discord.ButtonStyle.green, custom_id="admin_unlock", emoji="🔓")
     async def unlock(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.user.guild_permissions.administrator:
             return await interaction.response.send_message("Administrator permission required.", ephemeral=True)
@@ -171,7 +137,7 @@ class AdminControlView(discord.ui.View):
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('Enterprise Bot fully operational.')
+    print('Enterprise Bot fully operational with complete professional layout.')
 
 @bot.command(name="setup")
 @commands.has_permissions(administrator=True)
@@ -182,47 +148,65 @@ async def setup(ctx):
     except:
         pass
     
-    status_msg = await ctx.send("[INFO] Purging old architecture and rebuilding professional server layout...")
+    status_msg = await ctx.send("[INFO] Deploying complete professional server architecture...")
 
-    # 1. حذف جذري لكل الأقسام والقنوات القديمة التي تبدأ بـ [SECTOR أو [ADMIN
-    for channel in guild.channels:
-        if any(keyword in channel.name.upper() for keyword in ["SECTOR", "ADMIN", "SECURITY", "CONNECTION", "COMMAND", "PAYLOAD", "ROOM", "SURVEILLANCE"]):
-            try:
-                await channel.delete()
-                await asyncio.sleep(0.5) # تجنب حدود سبام ديسكورد
-            except Exception as e:
-                print(f"Could not delete {channel.name}: {e}")
+    # التأكد من عدم تكرار الأقسام بل تحديثها أو إنشائها إن لم تكن موجودة
+    def get_or_create_cat(name):
+        return discord.utils.get(guild.categories, name=name)
 
-    for category in guild.categories:
-        if any(keyword in category.name.upper() for keyword in ["SECTOR", "ADMIN"]):
-            try:
-                await category.delete()
-                await asyncio.sleep(0.5)
-            except Exception as e:
-                print(f"Could not delete category {category.name}: {e}")
-
-    # 2. بناء الأقسام والقنوات الجديدة كلياً بأسلوب احترافي وأشكال منظمة
-    cat1 = await guild.create_category("🔒 -- [ SECTOR 01 ] SYSTEM CORE")
+    # Sector 01
+    cat1 = get_or_create_cat("🔒 -- [ Sector 01 ] System Core") or await guild.create_category("🔒 -- [ Sector 01 ] System Core")
     
-    sec_dir = await guild.create_text_channel("📜-security-directives", category=cat1)
-    await sec_dir.send("**[VERIFICATION PROTOCOL]**\nClick below to verify your identity and unlock system access:", view=VerificationView())
+    sec_dir = discord.utils.get(cat1.text_channels, name="security-directives") or await guild.create_text_channel("security-directives", category=cat1)
+    await sec_dir.send("**[Verification Protocol]**\nClick below to verify your identity and unlock system access:", view=VerificationView())
 
-    role_guide = await guild.create_text_channel("🛡️-role-hierarchy-guide", category=cat1)
-    await role_guide.send("**[ENTERPRISE SELF-ROLES CLEARANCE SYSTEM]**\nSelect your desired operational clearance role using the interactive buttons below:", view=SelfRolesView())
+    role_guide = discord.utils.get(cat1.text_channels, name="role-hierarchy-guide") or await guild.create_text_channel("role-hierarchy-guide", category=cat1)
+    await role_guide.send("**[Enterprise Self-Roles Clearance System]**\nSelect your desired operational clearance role using the interactive buttons below:", view=SelfRolesView())
 
-    cat2 = await guild.create_category("⚡ -- [ SECTOR 02 ] TERMINAL CHAT")
-    conn_term = await guild.create_text_channel("🔗-connection-terminal", category=cat2)
-    await conn_term.send("**[CONNECTION TERMINAL]**\nWelcome to the network. Use the ticketing system below for support:", view=TicketView())
+    sys_broadcast = discord.utils.get(cat1.text_channels, name="system-broadcast") or await guild.create_text_channel("system-broadcast", category=cat1)
 
-    admin_cat = await guild.create_category("⚙️ -- [ ADMIN CONSOLE ]")
-    admin_ch = await guild.create_text_channel("🛠️-admin-console", category=admin_cat, overwrites={
-        guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        guild.me: discord.PermissionOverwrite(read_messages=True)
-    })
-    await admin_ch.send("**[ADMINISTRATIVE CONTROL PANEL]**\nManage emergency lockdown and system security states:", view=AdminControlView())
+    # Sector 02
+    cat2 = get_or_create_cat("⚡ -- [ Sector 02 ] Terminal Chat") or await guild.create_category("⚡ -- [ Sector 02 ] Terminal Chat")
+    for ch_name in ["connection-terminal", "global-network", "command-shell", "payload-archive"]:
+        if not discord.utils.get(cat2.text_channels, name=ch_name):
+            await guild.create_text_channel(ch_name, category=cat2)
+    
+    conn_term = discord.utils.get(cat2.text_channels, name="connection-terminal")
+    if conn_term:
+        await conn_term.send("**[Connection Terminal]**\nWelcome to the network. Use the ticketing system below for support:", view=TicketView())
+
+    # Sector 03
+    cat3 = get_or_create_cat("🎧 -- [ Sector 03 ] Secure Nodes") or await guild.create_category("🎧 -- [ Sector 03 ] Secure Nodes")
+    for vc_name in ["[Node-01] Safe Zone", "[Node-02] Operations Room", "[Node-03] Secure Alpha"]:
+        if not discord.utils.get(cat3.voice_channels, name=vc_name):
+            await guild.create_voice_channel(vc_name, category=cat3)
+
+    # Sector 04
+    cat4 = get_or_create_cat("🎛️ -- [ Sector 04 ] Room Generator") or await guild.create_category("🎛️ -- [ Sector 04 ] Room Generator")
+    if not discord.utils.get(cat4.text_channels, name="room-generator"):
+        await guild.create_text_channel("room-generator", category=cat4)
+
+    # Sector 05
+    cat5 = get_or_create_cat("📁 -- [ Sector 05 ] Dynamic Notes") or await guild.create_category("📁 -- [ Sector 05 ] Dynamic Notes")
+
+    # Sector 06
+    cat6 = get_or_create_cat("👁️ -- [ Sector 06 ] Control & Logs") or await guild.create_category("👁️ -- [ Sector 06 ] Control & Logs")
+    for ch_name in ["room-control-hub", "surveillance-logs"]:
+        if not discord.utils.get(cat6.text_channels, name=ch_name):
+            await guild.create_text_channel(ch_name, category=cat6)
+
+    # Admin Console
+    admin_cat = get_or_create_cat("⚙️ -- [ Admin Console ]") or await guild.create_category("⚙️ -- [ Admin Console ]")
+    admin_ch = discord.utils.get(admin_cat.text_channels, name="admin-console")
+    if not admin_ch:
+        admin_ch = await guild.create_text_channel("admin-console", category=admin_cat, overwrites={
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            guild.me: discord.PermissionOverwrite(read_messages=True)
+        })
+        await admin_ch.send("**[Administrative Control Panel]**\nManage emergency lockdown and system security states:", view=AdminControlView())
 
     try:
-        await status_msg.edit(content="[SUCCESS] Server architecture completely purged and rebuilt with professional UI components!")
+        await status_msg.edit(content="[SUCCESS] Complete server architecture synchronized and deployed successfully with Capitalized UI components!")
         await asyncio.sleep(5)
         await status_msg.delete()
     except:
