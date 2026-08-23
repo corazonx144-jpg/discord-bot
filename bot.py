@@ -44,7 +44,6 @@ WHT = "\u001b[1;37m"
 BLK = "\u001b[0;30m"
 RST = "\u001b[0m"
 DIM = "\u001b[2m"
-MAG = "\u001b[1;35m"
 
 
 def _hash_id(uid: int) -> str:
@@ -174,84 +173,62 @@ def _add_role_overwrite(base: dict, role: discord.Role) -> dict:
     return o
 
 
+def cmd_embed(header: str, lines: str, colour: int = 0x00FF41) -> discord.Embed:
+    """Clean CMD-style embed without heavy ANSI frames."""
+    body = (
+        f"{CYN}╔══════════════════════════════════════════════════════════════╗{RST}\n"
+        f"{CYN}║{RST}  {WHT}{header:^56}{RST}  {CYN}║{RST}\n"
+        f"{CYN}╠══════════════════════════════════════════════════════════════╣{RST}\n"
+        f"{lines}\n"
+        f"{CYN}╚══════════════════════════════════════════════════════════════╝{RST}"
+    )
+    embed = discord.Embed(description=f"```ansi\n{body}\n```", colour=colour)
+    embed.set_footer(text="C:\\NEXUS> _")
+    return embed
+
+
 def arrival_terminal_embed(guild: discord.Guild) -> discord.Embed:
     ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = (
-        f"{CYN}┌────────────────────────────────────────┐{RST}\n"
-        f"{CYN}│{RST}  {WHT}NEXUS GATEWAY v4.0.1 — {guild.name:<20}{RST} {CYN}│{RST}\n"
-        f"{CYN}│{RST}  {DIM}SESSION: {ts}{RST}                    {CYN}│{RST}\n"
-        f"{CYN}└────────────────────────────────────────┘{RST}\n\n"
-        f"{GRN}[OK]{RST}     Secure gateway online\n"
-        f"{GRN}[OK]{RST}     Biometric scanner active\n"
-        f"{GRN}[OK]{RST}     Encryption: AES-256-GCM\n"
-        f"{YLW}[WARN]{RST}  Clearance: PENDING APPROVAL\n"
-        f"{CYN}[>>]{RST}    Awaiting identity verification\n\n"
-        f"{WHT}╔══════════════════════════════════════╗{RST}\n"
-        f"{WHT}║  PHASE 01 · REQUEST ACCESS           ║{RST}\n"
-        f"{WHT}║  Submit biometric data for review    ║{RST}\n"
-        f"{WHT}║                                      ║{RST}\n"
-        f"{WHT}║  PHASE 02 · AWAIT CLEARANCE          ║{RST}\n"
-        f"{WHT}║  Manual approval required — no auto  ║{RST}\n"
-        f"{WHT}╚══════════════════════════════════════╝{RST}\n\n"
-        f"{DIM}[NOTE]{RST}  All sessions are logged and encrypted.\n"
-        f"{DIM}[WARN]{RST}  Unauthorized access attempts are flagged."
+        f"{CYN}[SYS]{RST}   {guild.name}  |  {ts}\n"
+        f"{GRN}[OK]{RST}    Secure gateway online\n"
+        f"{GRN}[OK]{RST}    Biometric scanner active\n"
+        f"{YLW}[WARN]{RST} Clearance: PENDING APPROVAL\n\n"
+        f"{WHT}> INITIATE VERIFY.EXE to begin identity scan{RST}\n"
+        f"{DIM}> No automatic role grants. Admin review required.{RST}"
     )
-    return hx_embed("NEXUS // ARRIVAL TERMINAL", lines, colour=0x22D3EE)
+    return cmd_embed("ARRIVAL TERMINAL", lines, colour=0x22D3EE)
 
 
 def rules_embed(guild: discord.Guild) -> discord.Embed:
     lines = (
-        f"{CYN}┌────────────────────────────────────────┐{RST}\n"
-        f"{CYN}│{RST}  {WHT}PROTOCOL RULES // SECTOR 01{RST}          {CYN}│{RST}\n"
-        f"{CYN}└────────────────────────────────────────┘{RST}\n\n"
-        f"{GRN}[01]{RST}  RESPECT ALL PERSONNEL\n"
-        f"{DIM}      No harassment, hate speech, or toxicity.{RST}\n\n"
-        f"{GRN}[02]{RST}  CLEARANCE REQUIRED\n"
-        f"{DIM}      No access beyond SECTOR 01 without verification.{RST}\n\n"
-        f"{GRN}[03]{RST}  CLASSIFIED MATERIAL\n"
-        f"{DIM}      No doxxing, leaks, or unauthorized data sharing.{RST}\n\n"
-        f"{GRN}[04]{RST}  COMMUNICATION PROTOCOL\n"
-        f"{DIM}      Use appropriate channels for each topic.{RST}\n\n"
-        f"{GRN}[05]{RST}  SECURITY BREACH\n"
-        f"{DIM}      Report violations to Moderator or Support Team.{RST}\n\n"
-        f"{GRN}[06]{RST}  VOICE NODE ETIQUETTE\n"
-        f"{DIM}      No earrape, spam, or unauthorized recording.{RST}\n\n"
-        f"{GRN}[07]{RST}  EXTERNAL LINKS\n"
-        f"{DIM}      No malicious URLs or unsolicited invites.{RST}\n\n"
-        f"{GRN}[08]{RST}  BOT INTERACTION\n"
-        f"{DIM}      Do not abuse bot commands or exploit bugs.{RST}\n\n"
-        f"{RED}[VIOLATION]{RST}  Immediate termination of access."
+        f"{CYN}[01]{RST}  RESPECT ALL PERSONNEL  {DIM}— No harassment / toxicity{RST}\n"
+        f"{CYN}[02]{RST}  CLEARANCE REQUIRED     {DIM}— No access beyond Sector 01{RST}\n"
+        f"{CYN}[03]{RST}  CLASSIFIED MATERIAL    {DIM}— No doxxing or leaks{RST}\n"
+        f"{CYN}[04]{RST}  COMMUNICATION PROTOCOL {DIM}— Use correct channels{RST}\n"
+        f"{CYN}[05]{RST}  SECURITY BREACH        {DIM}— Report to Moderator{RST}\n"
+        f"{CYN}[06]{RST}  VOICE NODE ETIQUETTE   {DIM}— No earrape / spam{RST}\n"
+        f"{CYN}[07]{RST}  EXTERNAL LINKS         {DIM}— No malicious URLs{RST}\n"
+        f"{CYN}[08]{RST}  BOT INTERACTION        {DIM}— Do not abuse commands{RST}\n\n"
+        f"{RED}[VIOLATION]{RST} Immediate access termination."
     )
-    return hx_embed("RULES // PROTOCOL", lines, colour=0xFF4444)
+    return cmd_embed("PROTOCOL RULES", lines, colour=0xFF4444)
 
 
 def role_matrix_embed() -> discord.Embed:
     lines = (
-        f"{CYN}┌────────────────────────────────────────┐{RST}\n"
-        f"{CYN}│{RST}  {WHT}ROLE MATRIX // ADMIN REFERENCE{RST}       {CYN}│{RST}\n"
-        f"{CYN}└────────────────────────────────────────┘{RST}\n\n"
-        f"{BLU}🔵 Verified{RST}\n"
-        f"{DIM}   Access: SECTOR 02-07 | Base clearance level{RST}\n\n"
-        f"{YLW}🟡 Elite Agent{RST}\n"
-        f"{DIM}   Access: ALL SECTORS | Full system access{RST}\n\n"
-        f"{WHT}⚪ Guest Node{RST}\n"
-        f"{DIM}   Access: SECTOR 03 (read-only) | Temporary visitor{RST}\n\n"
-        f"{GRN}🟢 Support Team{RST}\n"
-        f"{DIM}   Access: SECTOR 06 + Tickets | Manage messages{RST}\n\n"
-        f"{BLU}🔵 Developer{RST}\n"
-        f"{DIM}   Access: 🧪-dev-terminal | Code & bot dev{RST}\n\n"
-        f"{YLW}🟠 Moderator{RST}\n"
-        f"{DIM}   Access: 🛡️-mod-ops | Kick, mute, warn{RST}\n\n"
-        f"{MAG}🩷 VIP{RST}\n"
-        f"{DIM}   Access: 👑-vip-lounge | Premium member{RST}\n\n"
-        f"{RED}🔴 Streamer{RST}\n"
-        f"{DIM}   Access: 📺-stream-deck | Content creator{RST}\n\n"
-        f"{CYN}🩵 Artist{RST}\n"
-        f"{DIM}   Access: 🎨-art-gallery | Visual artist{RST}\n\n"
-        f"{MAG}🟣 Musician{RST}\n"
-        f"{DIM}   Access: 🎵-music-lab | Music producer{RST}"
+        f"{BLU}Verified{RST}      {DIM}Base access  |  Sectors 02-07{RST}\n"
+        f"{YLW}Elite Agent{RST}   {DIM}Full access  |  All sectors{RST}\n"
+        f"{WHT}Guest Node{RST}    {DIM}Read-only    |  Sector 03{RST}\n"
+        f"{GRN}Support Team{RST}  {DIM}Tickets      |  Manage messages{RST}\n"
+        f"{BLU}Developer{RST}     {DIM}Dev terminal |  Code & bot dev{RST}\n"
+        f"{YLW}Moderator{RST}     {DIM}Mod ops      |  Kick, mute, warn{RST}\n"
+        f"{MAG}VIP{RST}           {DIM}VIP lounge   |  Premium member{RST}\n"
+        f"{RED}Streamer{RST}      {DIM}Stream deck  |  Content creator{RST}\n"
+        f"{CYN}Artist{RST}        {DIM}Art gallery  |  Visual artist{RST}\n"
+        f"{MAG}Musician{RST}      {DIM}Music lab    |  Music producer{RST}"
     )
-    return hx_embed("ADMIN // ROLE MATRIX", lines, colour=0x7C3AED)
+    return cmd_embed("ROLE MATRIX", lines, colour=0x7C3AED)
 
 
 async def build_layout(guild: discord.Guild) -> None:
@@ -371,22 +348,22 @@ async def build_layout(guild: discord.Guild) -> None:
     # ── Panels ──
     await ensure_panel(arrival, "arrival", arrival_terminal_embed(guild), VerificationView())
 
-    await ensure_panel(verify, "verification", hx_embed("ACCESS // STAGE 01",
+    await ensure_panel(verify, "verification", cmd_embed("ACCESS // STAGE 01",
         f"{CYN}[INFO]{RST}  Transmit an access request.\n"
         f"{YLW}[WARN]{RST}  Approval opens Clearance Gate only."), discord.ui.View())
 
-    await ensure_panel(roles_ch, "roles", hx_embed("CLEARANCE // STAGE 02",
+    await ensure_panel(roles_ch, "roles", cmd_embed("CLEARANCE // STAGE 02",
         f"{CYN}[INFO]{RST}  Request one clearance.\n"
         f"{YLW}[WARN]{RST}  Owner must approve before final sectors unlock."), RoleView(bot.database))
 
-    await ensure_panel(tickets_ch, "tickets", hx_embed("SUPPORT TERMINAL",
+    await ensure_panel(tickets_ch, "tickets", cmd_embed("SUPPORT TERMINAL",
         f"{GRN}[OK]{RST}  Open one private, persistent support ticket."), TicketView(bot.database))
 
-    await ensure_panel(room_panel, "room_generator", hx_embed("VOICE LAB",
+    await ensure_panel(room_panel, "room_generator", cmd_embed("VOICE LAB",
         f"{CYN}[INFO]{RST}  Create a public or private voice room.\n"
         f"{YLW}[WARN]{RST}  Self-destructs on owner exit or timer expiry."), RoomPanelView(bot.database))
 
-    # Rules panel (static, no view needed)
+    # Rules panel (static)
     await ensure_panel(rules_ch, "rules", rules_embed(guild), discord.ui.View())
 
     # Role matrix panel (static, admin reference)
@@ -414,12 +391,12 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_member_join(member: discord.Member) -> None:
-    """Send a temporary personalized scan in arrival-terminal. Auto-deletes after 20s."""
+    """Send a temporary personalized scan in arrival-terminal with @mention."""
     await bot.database.set_member_stage(member.guild.id, member.id, "arrival")
     channel = discord.utils.get(member.guild.text_channels, name="⌁-arrival-terminal")
     if channel:
         ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-        embed = hx_embed(
+        embed = cmd_embed(
             f"INCOMING // {member.name.upper()}",
             f"{CYN}[SCAN]{RST}   Biometric lock engaged\n"
             f"{GRN}[TARGET]{RST} {member.mention}\n"
@@ -430,9 +407,9 @@ async def on_member_join(member: discord.Member) -> None:
             f"{RED}[ALERT]{RST}  Clearance required for sector access\n"
             f"{GRN}[ACTION]{RST} Execute VERIFY.EXE below",
             colour=0xFF4444,
-            member=member,
         )
-        msg = await channel.send(embed=embed)
+        embed.set_thumbnail(url=member.display_avatar.url)
+        msg = await channel.send(content=member.mention, embed=embed)
         await asyncio.sleep(20)
         with suppress(discord.NotFound):
             await msg.delete()
@@ -482,7 +459,7 @@ async def clear(interaction: discord.Interaction, amount: app_commands.Range[int
 @bot.tree.command(name="status", description="Show the bot\'s current operational status.")
 async def status(interaction: discord.Interaction) -> None:
     ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-    embed = hx_embed(
+    embed = cmd_embed(
         "NEXUS STATUS",
         f"{GRN}[OK]{RST}   Latency: `{round(bot.latency * 1000)} ms`\n"
         f"{GRN}[OK]{RST}   Database: `online`\n"
