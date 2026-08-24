@@ -482,6 +482,43 @@ async def status(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
+# ── NEW: Instant verify command (Admin/Mod only) ──
+@bot.tree.command(name="verify", description="Instantly verify a member (Admin/Mod only)")
+@app_commands.guild_only()
+@app_commands.default_permissions(manage_messages=True)
+@app_commands.describe(member="Member to verify instantly")
+async def verify_member(interaction: discord.Interaction, member: discord.Member) -> None:
+    if not interaction.user.guild_permissions.manage_messages:
+        return await interaction.response.send_message("Manage Messages permission required.", ephemeral=True)
+
+    role = discord.utils.get(interaction.guild.roles, name="Verified")
+    if not role:
+        return await interaction.response.send_message("Verified role not found. Run /setup first.", ephemeral=True)
+
+    if role >= interaction.guild.me.top_role:  # type: ignore[union-attr]
+        return await interaction.response.send_message("Move my role above Verified first.", ephemeral=True)
+
+    await member.add_roles(role, reason=f"Instant verify by {interaction.user}")
+    await bot.database.set_verification_status(interaction.guild.id, member.id, "approved")
+    await bot.database.set_member_stage(interaction.guild.id, member.id, "verified")
+
+    arrival = discord.utils.get(interaction.guild.text_channels, name="⌁-arrival-terminal")
+    if arrival:
+        ts = datetime.now(UTC).strftime("%H:%M:%S UTC")
+        tx_embed = cmd_embed(
+            "ACCESS GRANTED // MANUAL OVERRIDE",
+            f"{GRN}[SUCCESS]{RST}  Identity verified for {member.mention}\n"
+            f"{CYN}[CLEARANCE]{RST} LEVEL 1 — VERIFIED\n"
+            f"{CYN}[BY]{RST}      Approved by {interaction.user.mention}\n"
+            f"{DIM}[TIME]{RST}    {ts}",
+            colour=0x00FF41,
+        )
+        tx_embed.set_thumbnail(url=member.display_avatar.url)
+        await arrival.send(content=member.mention, embed=tx_embed, view=StageTransitionView(bot.database))
+
+    await interaction.response.send_message(f"✅ {member.mention} has been verified instantly.", ephemeral=True)
+
+
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
     log.exception("Application command failed", exc_info=error)
@@ -522,8 +559,41 @@ async def prefix_rebuild(ctx: commands.Context, confirmation: str = "") -> None:
     await build_layout(ctx.guild)
 
 
+# ── NEW: Prefix instant verify ──
+@bot.command(name="verify")
+@commands.guild_only()
+@commands.has_permissions(manage_messages=True)
+async def prefix_verify(ctx: commands.Context, member: discord.Member) -> None:
+    role = discord.utils.get(ctx.guild.roles, name="Verified")
+    if not role:
+        return await ctx.reply("Run /setup first.", mention_author=False)
+    if role >= ctx.guild.me.top_role:
+        return await ctx.reply("Move my role above Verified first.", mention_author=False)
+
+    await member.add_roles(role, reason=f"Manual verify by {ctx.author}")
+    await bot.database.set_verification_status(ctx.guild.id, member.id, "approved")
+    await bot.database.set_member_stage(ctx.guild.id, member.id, "verified")
+
+    arrival = discord.utils.get(ctx.guild.text_channels, name="⌁-arrival-terminal")
+    if arrival:
+        ts = datetime.now(UTC).strftime("%H:%M:%S UTC")
+        tx_embed = cmd_embed(
+            "ACCESS GRANTED // MANUAL OVERRIDE",
+            f"{GRN}[SUCCESS]{RST}  Identity verified for {member.mention}\n"
+            f"{CYN}[CLEARANCE]{RST} LEVEL 1 — VERIFIED\n"
+            f"{CYN}[BY]{RST}      Approved by {ctx.author.mention}\n"
+            f"{DIM}[TIME]{RST}    {ts}",
+            colour=0x00FF41,
+        )
+        tx_embed.set_thumbnail(url=member.display_avatar.url)
+        await arrival.send(content=member.mention, embed=tx_embed, view=StageTransitionView(bot.database))
+
+    await ctx.reply(f"✅ Verified {member.mention}", mention_author=False)
+
+
 @prefix_setup.error
 @prefix_clear.error
+@prefix_verify.error
 async def prefix_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
     if isinstance(error, commands.MissingPermissions):
         await ctx.reply("You do not have permission for this command.", mention_author=False)
