@@ -207,6 +207,7 @@ async def ensure_voice(category: discord.CategoryChannel, name: str) -> None:
         await category.guild.create_voice_channel(name, category=category, reason="Nexus setup")
 
 
+
 async def ensure_stage(guild: discord.Guild, name: str, category: discord.CategoryChannel = None) -> discord.StageChannel:
     channel = discord.utils.get(guild.stage_channels, name=name)
     if channel is None:
@@ -219,10 +220,16 @@ async def ensure_panel(channel: discord.TextChannel, panel_key: str, embed: disc
     if stored:
         stored_channel = channel.guild.get_channel(stored[0])
         if isinstance(stored_channel, discord.TextChannel):
-            with suppress(discord.NotFound, discord.Forbidden):
+            try:
                 message = await stored_channel.fetch_message(stored[1])
                 await message.edit(embed=embed, view=view)
                 return
+            except (discord.NotFound, discord.Forbidden):
+                # Stale record - delete and recreate
+                await bot.database.execute(
+                    "DELETE FROM panels WHERE guild_id=? AND panel_key=?",
+                    (channel.guild.id, panel_key)
+                )
     message = await channel.send(embed=embed, view=view)
     await bot.database.save_panel(channel.guild.id, panel_key, channel.id, message.id)
 
@@ -474,16 +481,16 @@ async def _clean_layout(guild: discord.Guild) -> None:
             if name not in _KEEP_TEXT:
                 with suppress(discord.Forbidden, discord.NotFound):
                     await channel.delete(reason="Nexus clean: removed from layout")
+        elif isinstance(channel, discord.StageChannel):
+            if name not in _KEEP_TEXT:
+                with suppress(discord.Forbidden, discord.NotFound):
+                    await channel.delete(reason="Nexus clean: removed from layout")
         elif isinstance(channel, discord.VoiceChannel):
             if name not in _KEEP_VOICE:
                 record = await bot.database.room(channel.id)
                 if not record:
                     with suppress(discord.Forbidden, discord.NotFound):
                         await channel.delete(reason="Nexus clean: removed from layout")
-        elif isinstance(channel, discord.StageChannel):
-            if name not in _KEEP_TEXT:
-                with suppress(discord.Forbidden, discord.NotFound):
-                    await channel.delete(reason="Nexus clean: removed from layout")
 
     for category in list(guild.categories):
         if category.name not in _KEEP_CATEGORIES:
