@@ -162,6 +162,17 @@ class VerificationView(discord.ui.View):
         req_embed.set_footer(text=f"member:{interaction.user.id}")
         await queue.send(embed=req_embed, view=ApprovalView(db))
 
+        # ── NEW: Ping staff roles for immediate attention ──
+        staff_role = discord.utils.get(interaction.guild.roles, name="Support Team")
+        mod_role = discord.utils.get(interaction.guild.roles, name="Moderator")
+        mention_parts = []
+        if staff_role:
+            mention_parts.append(staff_role.mention)
+        if mod_role:
+            mention_parts.append(mod_role.mention)
+        if mention_parts:
+            await queue.send(" ".join(mention_parts), delete_after=3600)
+
         if interaction.guild.owner:
             try:
                 await interaction.guild.owner.send(
@@ -177,8 +188,9 @@ class ApprovalView(discord.ui.View):
         self.database = database
 
     async def decide(self, interaction: discord.Interaction, approved: bool) -> None:
-        if not interaction.guild or not interaction.user.guild_permissions.administrator or not interaction.message or not interaction.message.embeds:
-            return await interaction.response.send_message("Administrator permission required.", ephemeral=True)
+        # ── CHANGED: allow Moderator/Support Team (manage_channels) not just administrator ──
+        if not interaction.guild or not interaction.user.guild_permissions.manage_channels or not interaction.message or not interaction.message.embeds:
+            return await interaction.response.send_message("Manage Channels permission required.", ephemeral=True)
 
         footer = interaction.message.embeds[0].footer.text or ""
         arrival = discord.utils.get(interaction.guild.text_channels, name="⌁-arrival-terminal")
