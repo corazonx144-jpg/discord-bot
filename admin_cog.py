@@ -1,20 +1,18 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import database
 import views
 
 class SystemAdmin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="setup_system", description="[ROOT] Purge non-standard architecture and deploy core Cyberpunk design.")
+    @app_commands.command(name="setup_system", description="[ROOT] Clean server structure and deploy core Cyberpunk grid UI.")
     @app_commands.checks.has_permissions(administrator=True)
     async def setup_system(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
 
-        # الهيكلية المعتمدة
         TARGET_STRUCTURE = {
             "🔒 – SECTOR 00 | GATEWAY": [
                 "⚡-arrival-terminal",
@@ -59,7 +57,7 @@ class SystemAdmin(commands.Cog):
             for item in channels:
                 all_valid_names.append(item[0] if isinstance(item, tuple) else item)
 
-        # 1. تنظيف القنوات الزائدة والمكررة
+        # 1. تنظيف القنوات المكررة والغير معرفة
         existing_channels = list(guild.channels)
         for channel in existing_channels:
             if isinstance(channel, (discord.TextChannel, discord.VoiceChannel)):
@@ -75,7 +73,7 @@ class SystemAdmin(commands.Cog):
 
         created_channels = {}
 
-        # 2. إنشاء وتجميع القطاعات
+        # 2. إنشاء الهيكلية والنقل للقطاعات
         for cat_name, channels in TARGET_STRUCTURE.items():
             category = discord.utils.get(guild.categories, name=cat_name)
             if not category:
@@ -97,7 +95,7 @@ class SystemAdmin(commands.Cog):
                         await existing.edit(category=category)
                     created_channels[ch_name] = existing
 
-        # 3. إزالة أي مكررات إضافية
+        # 3. مسح أي قنوات مكررة ثانية بنفس الاسم
         for ch_name in all_valid_names:
             matches = [c for c in guild.channels if c.name == ch_name]
             if len(matches) > 1:
@@ -107,9 +105,9 @@ class SystemAdmin(commands.Cog):
                     except Exception:
                         pass
 
-        # 4. إعادة التصميم الأصلي (Full Cyberpunk Terminal UI)
+        # 4. إرسال الواجهات بدون أي روابط صور خارجية مكسورة
 
-        # ---------------- ARRIVAL TERMINAL ----------------
+        # --- ARRIVAL TERMINAL ---
         arrival_ch = created_channels.get("⚡-arrival-terminal")
         if arrival_ch:
             await arrival_ch.purge(limit=20)
@@ -129,11 +127,10 @@ class SystemAdmin(commands.Cog):
                 ),
                 color=0x00FF66
             )
-            embed_arrival.set_image(url="https://i.imgur.com/xV7N4Zb.gif") # خيارات الجرافيك السايبر
-            embed_arrival.set_footer(text="NEXUS CORE OS // SECURITY CLEARANCE REQUIRED", icon_url=guild.icon.url if guild.icon else None)
+            embed_arrival.set_footer(text="NEXUS CORE OS // SECURITY CLEARANCE REQUIRED")
             await arrival_ch.send(embed=embed_arrival)
 
-        # ---------------- VERIFICATION TERMINAL ----------------
+        # --- VERIFY ACCESS ---
         verify_ch = created_channels.get("🛡️-verify-access")
         if verify_ch:
             await verify_ch.purge(limit=20)
@@ -141,21 +138,20 @@ class SystemAdmin(commands.Cog):
                 title="═══ [ SECURITY PROTOCOL // VERIFICATION ] ═══",
                 description=(
                     "```ini\n"
-                    "[ AUTHORIZATION REQUIRED TO ACCESS INTERNAL NODES ]\n"
+                    "[ ACCESS RESTRICTED - OPERATOR APPROVAL REQUIRED ]\n"
                     "```\n"
                     "```yaml\n"
-                    "Status   : CLEARANCE PENDING\n"
-                    "Action   : Click [AUTHORIZE ACCESS] below to sync profile.\n"
-                    "Role Granted : [User] Verified\n"
+                    "Instruction : Click [AUTHORIZE ACCESS] below to fill the clearance modal.\n"
+                    "Process     : Request will be dispatched to Admins for review.\n"
                     "```\n"
-                    "⚠️ *Unverified users are restricted from executing commands or viewing private network sectors.*"
+                    "⚠️ *Unverified profiles remain restricted until authorized by System Operators.*"
                 ),
                 color=0x0099FF
             )
-            embed_verify.set_footer(text="GATEWAY CONTROL // PROTOCOL 00", icon_url=guild.icon.url if guild.icon else None)
+            embed_verify.set_footer(text="GATEWAY CONTROL // PROTOCOL 00")
             await verify_ch.send(embed=embed_verify, view=views.VerifyView())
 
-        # ---------------- TICKET SUPPORT TERMINAL ----------------
+        # --- OPEN TICKET ---
         ticket_ch = created_channels.get("🎟️-open-ticket")
         if ticket_ch:
             await ticket_ch.purge(limit=20)
@@ -167,30 +163,4 @@ class SystemAdmin(commands.Cog):
                     "║  DIRECT SUPPORT LINE : ACTIVE                               ║\n"
                     "║  ENCRYPTION LEVEL   : END-TO-END SYSTEM ENCRYPTED           ║\n"
                     "╚══════════════════════════════════════════════════════════════╝\n"
-                    "```\n"
-                    "> Need system assistance, custom permissions, or technical support?\n"
-                    "> Click **OPEN SYSTEM TICKET** below to launch a dedicated secure terminal."
-                ),
-                color=0x9900FF
-            )
-            embed_ticket.set_footer(text="NEXUS SERVICES // TERMINAL DISPATCH", icon_url=guild.icon.url if guild.icon else None)
-            await ticket_ch.send(embed=embed_ticket, view=views.TicketLaunchView())
-
-        await interaction.followup.send("```yaml\n[SUCCESS] Original Cyberpunk Terminal UI successfully redeployed without duplicates!\n```")
-
-    @app_commands.command(name="clear_roles", description="[ROOT] Purge custom non-essential roles.")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def clear_roles(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        purged = 0
-        for role in interaction.guild.roles:
-            if role.name != "@everyone" and not role.managed and role < interaction.guild.me.top_role:
-                try:
-                    await role.delete()
-                    purged += 1
-                except Exception:
-                    pass
-        await interaction.followup.send(f"```yaml\n[ROOT] Purged {purged} custom roles.\n```")
-
-async def setup(bot):
-    await bot.add_cog(SystemAdmin(bot))
+                    "
