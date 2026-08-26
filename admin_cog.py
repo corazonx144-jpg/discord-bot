@@ -7,14 +7,13 @@ class SystemAdmin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # 1. أمر التنظيف وإعادة البناء الذكي (Minimalist Cyber Architecture)
     @app_commands.command(name="setup_system", description="[ROOT] Purge non-standard channels and deploy optimized Cyberpunk structure.")
     @app_commands.checks.has_permissions(administrator=True)
     async def setup_system(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
 
-        # التصميم الأدق والأنظف بدون تكرار أو زحمة
+        # 1. الهيكلية المعتمدة
         TARGET_LAYOUT = {
             "🔒 SECTOR 00 // GATEWAY": [
                 "⚡-arrival-terminal",
@@ -36,22 +35,12 @@ class SystemAdmin(commands.Cog):
             ]
         }
 
-        # تجميع الرومات المسموحة
         allowed_channels = []
         for cat, chans in TARGET_LAYOUT.items():
             for ch in chans:
                 allowed_channels.append(ch[0] if isinstance(ch, tuple) else ch)
 
-        # مسح الزيادات والطفح داخل السيرفر
-        for channel in guild.channels:
-            if channel.category and "SECTOR" in channel.category.name:
-                if channel.name not in allowed_channels:
-                    try:
-                        await channel.delete(reason="Purging non-standard terminal node")
-                    except Exception:
-                        pass
-
-        # إنشاء الرومات وتطوير الهيكل
+        # 2. إنشاء القطاعات والقنوات بذكاء
         for cat_name, channels in TARGET_LAYOUT.items():
             category = discord.utils.get(guild.categories, name=cat_name)
             if not category:
@@ -61,16 +50,33 @@ class SystemAdmin(commands.Cog):
                 ch_name = item[0] if isinstance(item, tuple) else item
                 ch_type = item[1] if isinstance(item, tuple) else discord.ChannelType.text
 
-                existing = discord.utils.get(category.channels, name=ch_name)
+                existing = discord.utils.get(guild.channels, name=ch_name)
                 if not existing:
                     if ch_type == discord.ChannelType.text:
                         await guild.create_text_channel(ch_name, category=category)
                     elif ch_type == discord.ChannelType.voice:
                         await guild.create_voice_channel(ch_name, category=category)
+                else:
+                    # نقل الروم القائمة إلى القطاع الصحيح
+                    if existing.category != category:
+                        await existing.edit(category=category)
 
-        await interaction.followup.send("```yaml\n[SYSTEM] System layout synchronized. Redundant nodes successfully purged.\n```")
+        # 3. تنظيف الزوائد مع استثناء رومات الـ Community الرسمية من الحذف
+        for channel in guild.channels:
+            if isinstance(channel, (discord.TextChannel, discord.VoiceChannel)):
+                # استثناء الرومات المحمية من ديسكورد (System Channels)
+                is_community_rules = (guild.rules_channel and channel.id == guild.rules_channel.id)
+                is_community_updates = (guild.public_updates_channel and channel.id == guild.public_updates_channel.id)
+                
+                if not (is_community_rules or is_community_updates):
+                    if channel.name not in allowed_channels and channel.name != "general":
+                        try:
+                            await channel.delete(reason="Purging redundant non-standard channel")
+                        except Exception:
+                            pass
 
-    # 2. أمر تصفير وإلغاء جميع الرولات الإضافية بضغطة واحدة
+        await interaction.followup.send("```yaml\n[SYSTEM] Grid aligned. Community-protected channels synced without conflict.\n```")
+
     @app_commands.command(name="clear_roles", description="[ROOT] Strip all non-essential roles from the server.")
     @app_commands.checks.has_permissions(administrator=True)
     async def clear_roles(self, interaction: discord.Interaction):
@@ -87,7 +93,6 @@ class SystemAdmin(commands.Cog):
 
         await interaction.followup.send(f"```yaml\n[ROOT CLEARANCE] Execution complete. Removed {purged_count} custom roles.\n```")
 
-    # 3. أمر التحذير الإداري
     @app_commands.command(name="warn", description="[MOD] Issue a security violation warning to a user.")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def warn(self, interaction: discord.Interaction, user: discord.Member, reason: str):
@@ -99,7 +104,6 @@ class SystemAdmin(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
 
-    # 4. تفعيل / إلغاء وضع الـ RAID
     @app_commands.command(name="raid_mode", description="[SECURITY] Lock or Unlock access protocols for new accounts.")
     @app_commands.checks.has_permissions(administrator=True)
     async def raid_mode(self, interaction: discord.Interaction, enable: bool):
