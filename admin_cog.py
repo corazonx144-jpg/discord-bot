@@ -8,13 +8,13 @@ class SystemAdmin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="setup_system", description="[ROOT] Auto-align all Cyberpunk sectors and populate missing channels.")
+    @app_commands.command(name="setup_system", description="[ROOT] Align server grid and initialize all interface terminals.")
     @app_commands.checks.has_permissions(administrator=True)
     async def setup_system(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
 
-        # 1. الهيكلية الكاملة لجميع القطاعات لمنع وجود أي Category فارغ
+        # 1. الهيكلية المطابقة مع الفئات والقنوات
         TARGET_LAYOUT = {
             "SECTOR 00": {
                 "fullname": "🔒 – SECTOR 00 | GATEWAY",
@@ -49,7 +49,7 @@ class SystemAdmin(commands.Cog):
             },
             "SECTOR 07": {
                 "fullname": "💻 – SECTOR 07 | DEV OPS",
-                "channels": ["🛠️-bot-console", "⚙️-system-tests"]
+                "channels": ["🛠️-bot-console"]
             },
             "SECTOR 08": {
                 "fullname": "💎 – SECTOR 08 | VAULT",
@@ -57,7 +57,6 @@ class SystemAdmin(commands.Cog):
             }
         }
 
-        # جمع أسماء الرومات المعتمدة لمنع حذفها
         allowed_channels = []
         for key, data in TARGET_LAYOUT.items():
             for item in data["channels"]:
@@ -65,22 +64,18 @@ class SystemAdmin(commands.Cog):
 
         created_channels = {}
 
-        # 2. ربط القنوات بالقطاعات عبر المطابقة الجزئية برقم القطاع
+        # 2. مطابقة القطاعات وتوزيع الرومات
         for sec_code, sec_data in TARGET_LAYOUT.items():
-            # البحث عن القطاع في السيرفر عبر الرقم
             category = discord.utils.find(lambda c: sec_code in c.name, guild.categories)
-            
             if not category:
                 category = await guild.create_category(sec_data["fullname"])
             else:
-                # إعادة تسميته بالشكل المطلوب إن لزم
                 if category.name != sec_data["fullname"]:
                     try:
                         await category.edit(name=sec_data["fullname"])
                     except Exception:
                         pass
 
-            # إضافة الرومات داخل القطاع
             for item in sec_data["channels"]:
                 ch_name = item[0] if isinstance(item, tuple) else item
                 ch_type = item[1] if isinstance(item, tuple) else discord.ChannelType.text
@@ -97,7 +92,7 @@ class SystemAdmin(commands.Cog):
                         await existing.edit(category=category)
                     created_channels[ch_name] = existing
 
-        # 3. تنظيف القنوات المكررة أو الزائدة (مع استثناء رومات Community)
+        # 3. تنظيف الرومات الغريبة مع استثناء Community
         for channel in guild.channels:
             if isinstance(channel, (discord.TextChannel, discord.VoiceChannel)):
                 is_rules = (guild.rules_channel and channel.id == guild.rules_channel.id)
@@ -106,32 +101,68 @@ class SystemAdmin(commands.Cog):
                 if not (is_rules or is_updates):
                     if channel.name not in allowed_channels and channel.name != "general":
                         try:
-                            await channel.delete(reason="Clean non-layout channel")
+                            await channel.delete()
                         except Exception:
                             pass
 
-        # 4. نشر الواجهات التفاعلية (Verify & Tickets)
+        # 4. نشر الواجهات التفاعلية المصممة بشكـل عالي الجودة
+
+        # (أ) Arrival Terminal Banner
+        arrival_ch = created_channels.get("⚡-arrival-terminal")
+        if arrival_ch:
+            await arrival_ch.purge(limit=10)
+            embed_arrival = discord.Embed(
+                title="⚡ NEXUS // ENTRY TERMINAL INITIALIZED",
+                description=(
+                    "```yaml\n"
+                    "SYSTEM STATUS: ONLINE\n"
+                    "FIREWALL MODE: ACTIVE [ENCRYPTED]\n"
+                    "PROTOCOL: CYBERPUNK NETWORK GRID v4.0.8\n"
+                    "```\n"
+                    "Welcome strictly authorized entities. Proceed to `#verify-access` to unlock full clearance."
+                ),
+                color=discord.Color.green()
+            )
+            embed_arrival.set_footer(text="NEXUS GRID AUTOMATION SYSTEMS")
+            await arrival_ch.send(embed=embed_arrival)
+
+        # (ب) Clearance Verification Embed (مع الزر)
         verify_ch = created_channels.get("🛡️-verify-access")
         if verify_ch:
+            await verify_ch.purge(limit=10)
             embed_verify = discord.Embed(
-                title="🛡️ CLEARANCE VERIFICATION REQUIRED",
-                description="Click below to verify access credentials and gain access to grid nodes.",
+                title="🛡️ IDENTITY VERIFICATION TERMINAL",
+                description=(
+                    "To access internal channels and features within the grid, you must authorize your user profile.\n\n"
+                    "```yaml\n"
+                    "Requirement: Click the authorization button below.\n"
+                    "Clearance Level: [User] Verified Role\n"
+                    "```"
+                ),
                 color=discord.Color.blue()
             )
-            await verify_ch.purge(limit=5)
+            embed_verify.set_footer(text="Nexus Security System • Authorization Terminal")
             await verify_ch.send(embed=embed_verify, view=views.VerifyView())
 
+        # (ج) Ticket System Embed (مع الزر)
         ticket_ch = created_channels.get("🎟️-open-ticket")
         if ticket_ch:
+            await ticket_ch.purge(limit=10)
             embed_ticket = discord.Embed(
-                title="🎟️ SYSTEM TERMINAL SUPPORT",
-                description="Click below to open a direct support request channel.",
+                title="🎟️ OPERATOR SUPPORT TERMINAL",
+                description=(
+                    "Need assistance, project support, or custom clearance permissions?\n\n"
+                    "```yaml\n"
+                    "Action: Click to launch a secure ticket channel.\n"
+                    "Visibility: Only visible to assigned System Operators.\n"
+                    "```"
+                ),
                 color=discord.Color.dark_purple()
             )
-            await ticket_ch.purge(limit=5)
+            embed_ticket.set_footer(text="Nexus Support Matrix • System Helpdesk")
             await ticket_ch.send(embed=embed_ticket, view=views.TicketLaunchView())
 
-        await interaction.followup.send("```yaml\n[SUCCESS] Grid fully aligned! All sectors populated and interfaces active.\n```")
+        await interaction.followup.send("```yaml\n[SUCCESS] Grid fully formatted! All terminal embeds & views successfully published.\n```")
 
     @app_commands.command(name="clear_roles", description="[ROOT] Purge non-essential custom roles.")
     @app_commands.checks.has_permissions(administrator=True)
