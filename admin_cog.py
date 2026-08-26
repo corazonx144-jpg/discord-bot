@@ -163,4 +163,30 @@ class SystemAdmin(commands.Cog):
                     "║  DIRECT SUPPORT LINE : ACTIVE                               ║\n"
                     "║  ENCRYPTION LEVEL   : END-TO-END SYSTEM ENCRYPTED           ║\n"
                     "╚══════════════════════════════════════════════════════════════╝\n"
-                    "
+                    "```\n"
+                    "> Need system assistance or operator permissions?\n"
+                    "> Click **OPEN SYSTEM TICKET** below to initialize a private channel."
+                ),
+                color=0x9900FF
+            )
+            embed_ticket.set_footer(text="NEXUS SERVICES // TERMINAL DISPATCH")
+            await ticket_ch.send(embed=embed_ticket, view=views.TicketLaunchView())
+
+        await interaction.followup.send("```yaml\n[SUCCESS] Cleared broken image URLs and successfully re-deployed Cyberpunk UI.\n```")
+
+    @app_commands.command(name="clear_roles", description="[ROOT] Purge custom non-essential roles.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def clear_roles(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        purged = 0
+        for role in interaction.guild.roles:
+            if role.name != "@everyone" and not role.managed and role < interaction.guild.me.top_role:
+                try:
+                    await role.delete()
+                    purged += 1
+                except Exception:
+                    pass
+        await interaction.followup.send(f"```yaml\n[ROOT] Purged {purged} custom roles.\n```")
+
+async def setup(bot):
+    await bot.add_cog(SystemAdmin(bot))
