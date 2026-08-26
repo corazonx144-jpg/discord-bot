@@ -105,9 +105,7 @@ class SystemAdmin(commands.Cog):
                     except Exception:
                         pass
 
-        # 4. إرسال الواجهات بدون أي روابط صور خارجية مكسورة
-
-        # --- ARRIVAL TERMINAL ---
+        # 4. إرسال الواجهات
         arrival_ch = created_channels.get("⚡-arrival-terminal")
         if arrival_ch:
             await arrival_ch.purge(limit=20)
@@ -130,7 +128,6 @@ class SystemAdmin(commands.Cog):
             embed_arrival.set_footer(text="NEXUS CORE OS // SECURITY CLEARANCE REQUIRED")
             await arrival_ch.send(embed=embed_arrival)
 
-        # --- VERIFY ACCESS ---
         verify_ch = created_channels.get("🛡️-verify-access")
         if verify_ch:
             await verify_ch.purge(limit=20)
@@ -151,7 +148,6 @@ class SystemAdmin(commands.Cog):
             embed_verify.set_footer(text="GATEWAY CONTROL // PROTOCOL 00")
             await verify_ch.send(embed=embed_verify, view=views.VerifyView())
 
-        # --- OPEN TICKET ---
         ticket_ch = created_channels.get("🎟️-open-ticket")
         if ticket_ch:
             await ticket_ch.purge(limit=20)
@@ -172,7 +168,7 @@ class SystemAdmin(commands.Cog):
             embed_ticket.set_footer(text="NEXUS SERVICES // TERMINAL DISPATCH")
             await ticket_ch.send(embed=embed_ticket, view=views.TicketLaunchView())
 
-        await interaction.followup.send("```yaml\n[SUCCESS] Cleared broken image URLs and successfully re-deployed Cyberpunk UI.\n```")
+        await interaction.followup.send("```yaml\n[SUCCESS] Deploy successful!\n```")
 
     @app_commands.command(name="clear_roles", description="[ROOT] Purge custom non-essential roles.")
     @app_commands.checks.has_permissions(administrator=True)
