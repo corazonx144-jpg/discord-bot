@@ -8,13 +8,13 @@ class SystemAdmin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="setup_system", description="[ROOT] Purge non-standard architecture and deploy clean Cyberpunk grid.")
+    @app_commands.command(name="setup_system", description="[ROOT] Purge non-standard architecture and deploy core Cyberpunk design.")
     @app_commands.checks.has_permissions(administrator=True)
     async def setup_system(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
 
-        # 1. الهيكلية الدقيقة والمحصورة لمنع أي تكرار
+        # الهيكلية المعتمدة
         TARGET_STRUCTURE = {
             "🔒 – SECTOR 00 | GATEWAY": [
                 "⚡-arrival-terminal",
@@ -54,22 +54,19 @@ class SystemAdmin(commands.Cog):
             ]
         }
 
-        # قائمة كل أسماء القنوات المسموح بوجودها
         all_valid_names = []
         for channels in TARGET_STRUCTURE.values():
             for item in channels:
                 all_valid_names.append(item[0] if isinstance(item, tuple) else item)
 
-        # 2. تنظيف القنوات المكررة أو الزائدة أولاً قبل أي إنشاء
+        # 1. تنظيف القنوات الزائدة والمكررة
         existing_channels = list(guild.channels)
         for channel in existing_channels:
             if isinstance(channel, (discord.TextChannel, discord.VoiceChannel)):
-                # حماية رومات الـ Community الرسمية
                 is_rules = (guild.rules_channel and channel.id == guild.rules_channel.id)
                 is_updates = (guild.public_updates_channel and channel.id == guild.public_updates_channel.id)
                 
                 if not (is_rules or is_updates):
-                    # لو القناة مش في القائمة أو مكررة يتم مسحها
                     if channel.name not in all_valid_names:
                         try:
                             await channel.delete(reason="System Reset")
@@ -78,7 +75,7 @@ class SystemAdmin(commands.Cog):
 
         created_channels = {}
 
-        # 3. بناء الكاتيغوريز والقنوات بدون تكرار
+        # 2. إنشاء وتجميع القطاعات
         for cat_name, channels in TARGET_STRUCTURE.items():
             category = discord.utils.get(guild.categories, name=cat_name)
             if not category:
@@ -88,9 +85,7 @@ class SystemAdmin(commands.Cog):
                 ch_name = item[0] if isinstance(item, tuple) else item
                 ch_type = item[1] if isinstance(item, tuple) else discord.ChannelType.text
 
-                # البحث عن القناة والتأكد أننا لا ننشئ نسختين
                 existing = discord.utils.get(guild.channels, name=ch_name)
-                
                 if not existing:
                     if ch_type == discord.ChannelType.text:
                         ch_obj = await guild.create_text_channel(ch_name, category=category)
@@ -98,80 +93,90 @@ class SystemAdmin(commands.Cog):
                         ch_obj = await guild.create_voice_channel(ch_name, category=category)
                     created_channels[ch_name] = ch_obj
                 else:
-                    # لو موجودة انقلها للقطاع الصحيح واستخدمها
                     if existing.category != category:
                         await existing.edit(category=category)
                     created_channels[ch_name] = existing
 
-        # مسح أي نسخ مكررة بنفس الاسم إن وجدت مسبقاً
+        # 3. إزالة أي مكررات إضافية
         for ch_name in all_valid_names:
             matches = [c for c in guild.channels if c.name == ch_name]
             if len(matches) > 1:
                 for duplicate in matches[1:]:
                     try:
-                        await duplicate.delete(reason="Delete Duplicate Channel")
+                        await duplicate.delete(reason="Purge Duplicate")
                     except Exception:
                         pass
 
-        # 4. إعادة إرسال الواجهات الرئيسية بتنسيق Terminal احترافي
+        # 4. إعادة التصميم الأصلي (Full Cyberpunk Terminal UI)
 
-        # (أ) Arrival Terminal
+        # ---------------- ARRIVAL TERMINAL ----------------
         arrival_ch = created_channels.get("⚡-arrival-terminal")
         if arrival_ch:
             await arrival_ch.purge(limit=20)
             embed_arrival = discord.Embed(
-                title="⚡ NEXUS ARCHITECTURE // ARRIVAL TERMINAL",
+                title="═══ [ NEXUS SYSTEM // ENTRY TERMINAL ] ═══",
                 description=(
                     "```yaml\n"
-                    "SYSTEM STATUS  : ONLINE\n"
-                    "FIREWALL MODE  : ENCRYPTED / ACTIVE\n"
-                    "GRID PROTOCOL  : v4.0.8 CYBERPUNK NETWORK\n"
+                    "╔══════════════════════════════════════════════════════════════╗\n"
+                    "║  SYSTEM STATUS : ONLINE                                      ║\n"
+                    "║  FIREWALL      : ENCRYPTED // ACTIVE                         ║\n"
+                    "║  NODE PROTOCOL : CYBERPUNK NETWORK GRID v4.0.8               ║\n"
+                    "╚══════════════════════════════════════════════════════════════╝\n"
                     "```\n"
-                    "**Welcome Operator to NEXUS ZERO.**\n"
-                    "All incoming signals are monitored. Proceed to `#verify-access` to complete security clearance."
+                    "> **[!] INCOMING SIGNAL DETECTED**\n"
+                    "> Welcome to **NEXUS ZERO**. All network activity is logged and encrypted.\n\n"
+                    "📌 **NEXT STEP:** Head over to <#verify-access> to request identity clearance."
                 ),
-                color=discord.Color.from_rgb(57, 255, 20)
+                color=0x00FF66
             )
-            embed_arrival.set_footer(text="NEXUS CORE SYSTEM PROTOCOLS")
+            embed_arrival.set_image(url="https://i.imgur.com/xV7N4Zb.gif") # خيارات الجرافيك السايبر
+            embed_arrival.set_footer(text="NEXUS CORE OS // SECURITY CLEARANCE REQUIRED", icon_url=guild.icon.url if guild.icon else None)
             await arrival_ch.send(embed=embed_arrival)
 
-        # (ب) Verification Embed
+        # ---------------- VERIFICATION TERMINAL ----------------
         verify_ch = created_channels.get("🛡️-verify-access")
         if verify_ch:
             await verify_ch.purge(limit=20)
             embed_verify = discord.Embed(
-                title="🛡️ IDENTITY & CLEARANCE AUTHORIZATION",
+                title="═══ [ SECURITY PROTOCOL // VERIFICATION ] ═══",
                 description=(
-                    "Access to internal network nodes is restricted to verified users only.\n\n"
+                    "```ini\n"
+                    "[ AUTHORIZATION REQUIRED TO ACCESS INTERNAL NODES ]\n"
+                    "```\n"
                     "```yaml\n"
-                    "Authorization: Click the button below\n"
-                    "Assigned Clearance: [User] Verified\n"
-                    "```"
+                    "Status   : CLEARANCE PENDING\n"
+                    "Action   : Click [AUTHORIZE ACCESS] below to sync profile.\n"
+                    "Role Granted : [User] Verified\n"
+                    "```\n"
+                    "⚠️ *Unverified users are restricted from executing commands or viewing private network sectors.*"
                 ),
-                color=discord.Color.blue()
+                color=0x0099FF
             )
-            embed_verify.set_footer(text="Nexus Gateway Security • Verification Unit")
+            embed_verify.set_footer(text="GATEWAY CONTROL // PROTOCOL 00", icon_url=guild.icon.url if guild.icon else None)
             await verify_ch.send(embed=embed_verify, view=views.VerifyView())
 
-        # (ج) Ticket Support Embed
+        # ---------------- TICKET SUPPORT TERMINAL ----------------
         ticket_ch = created_channels.get("🎟️-open-ticket")
         if ticket_ch:
             await ticket_ch.purge(limit=20)
             embed_ticket = discord.Embed(
-                title="🎟️ SYSTEM OPERATOR HELPDESK",
+                title="═══ [ SYSTEM HELPDESK // DISPATCH TERMINAL ] ═══",
                 description=(
-                    "Initialize a private encrypted terminal to communicate directly with server administrators.\n\n"
                     "```yaml\n"
-                    "Service: Technical Support & Inquiries\n"
-                    "Security: Encrypted Channel (User + Staff Only)\n"
-                    "```"
+                    "╔══════════════════════════════════════════════════════════════╗\n"
+                    "║  DIRECT SUPPORT LINE : ACTIVE                               ║\n"
+                    "║  ENCRYPTION LEVEL   : END-TO-END SYSTEM ENCRYPTED           ║\n"
+                    "╚══════════════════════════════════════════════════════════════╝\n"
+                    "```\n"
+                    "> Need system assistance, custom permissions, or technical support?\n"
+                    "> Click **OPEN SYSTEM TICKET** below to launch a dedicated secure terminal."
                 ),
-                color=discord.Color.purple()
+                color=0x9900FF
             )
-            embed_ticket.set_footer(text="Nexus Support Terminals • Dispatch Center")
+            embed_ticket.set_footer(text="NEXUS SERVICES // TERMINAL DISPATCH", icon_url=guild.icon.url if guild.icon else None)
             await ticket_ch.send(embed=embed_ticket, view=views.TicketLaunchView())
 
-        await interaction.followup.send("```yaml\n[SUCCESS] Grid fully purged, deduplicated, and initial interfaces synchronized!\n```")
+        await interaction.followup.send("```yaml\n[SUCCESS] Original Cyberpunk Terminal UI successfully redeployed without duplicates!\n```")
 
     @app_commands.command(name="clear_roles", description="[ROOT] Purge custom non-essential roles.")
     @app_commands.checks.has_permissions(administrator=True)
