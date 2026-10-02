@@ -279,6 +279,12 @@ class Database:
             (guild_id, key),
         )
 
+    async def panel_channel_ids(self, guild_id: int) -> set[int]:
+        rows = await self._all(
+            "SELECT channel_id FROM panels WHERE guild_id=?", (guild_id,)
+        )
+        return {row[0] for row in rows}
+
     async def save_panel(
         self, guild_id: int, key: str, channel_id: int, message_id: int
     ) -> None:
