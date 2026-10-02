@@ -23,6 +23,8 @@ from layout import (
     KEEP_ROLES,
     LEVEL_ROLES,
     ROLE_SPECS,
+    SETUP_ACTIVE,
+    SetupReport,
     build_structure,
     is_self_assignable,
     sync_roles,
@@ -818,66 +820,93 @@ async def ensure_panel(
     view: discord.ui.View,
 ) -> None:
 
+    guild = channel.guild
+    keep_id: int | None = None
+
     stored = await bot.database.panel_message(
-        channel.guild.id,
+        guild.id,
         panel_key,
     )
 
-    if stored:
+    if stored and stored[0] == channel.id:
 
-        stored_channel = (
-            channel.guild.get_channel(
-                stored[0]
+        try:
+
+            message = await channel.fetch_message(
+                stored[1]
             )
+
+            await message.edit(
+                embed=embed,
+                view=view,
+            )
+
+            keep_id = message.id
+
+        except (
+            discord.NotFound,
+            discord.Forbidden,
+        ):
+
+            keep_id = None
+
+    elif stored:
+
+        # the panel used to live in another channel: remove that copy
+        old_channel = guild.get_channel(
+            stored[0]
         )
 
         if isinstance(
-            stored_channel,
+            old_channel,
             discord.TextChannel,
         ):
 
-            try:
+            with suppress(
+                discord.NotFound,
+                discord.Forbidden,
+                discord.HTTPException,
+            ):
 
-                message = await stored_channel.fetch_message(
+                old_message = await old_channel.fetch_message(
                     stored[1]
                 )
 
-                await message.edit(
-                    embed=embed,
-                    view=view,
-                )
+                await old_message.delete()
 
-                return
+    if keep_id is None:
 
-            except (
-                discord.NotFound,
-                discord.Forbidden,
-            ):
+        message = await channel.send(
+            embed=embed,
+            view=view,
+        )
 
-                with suppress(Exception):
+        await bot.database.save_panel(
+            guild.id,
+            panel_key,
+            channel.id,
+            message.id,
+        )
 
-                    await bot.database.execute(
-                        """
-                        DELETE FROM panels
-                        WHERE guild_id=? AND panel_key=?
-                        """,
-                        (
-                            channel.guild.id,
-                            panel_key,
-                        ),
-                    )
+        keep_id = message.id
 
-    message = await channel.send(
-        embed=embed,
-        view=view,
-    )
+    # panel channels hold nothing but their panel, so copies left by
+    # older versions of the bot are removed (never in the arrival feed)
+    if panel_key != "arrival":
 
-    await bot.database.save_panel(
-        channel.guild.id,
-        panel_key,
-        channel.id,
-        message.id,
-    )
+        with suppress(
+            discord.Forbidden,
+            discord.HTTPException,
+        ):
+
+            async for old in channel.history(limit=100):
+
+                if (
+                    old.author.id == guild.me.id
+                    and old.id != keep_id
+                ):
+
+                    await old.delete()
 
 
 # ============================================================
@@ -1101,16 +1130,90 @@ async def _full_reset(
 # BUILD SERVER LAYOUT
 # ============================================================
 
+_SETUP_LOCKS: dict[int, asyncio.Lock] = {}
+
+_PANEL_CHANNELS = (
+    "⌁-arrival-terminal",
+    "🛡️-verify-access",
+    "⚡-select-clearance",
+    "🎫-open-a-ticket",
+    "🎛️-create-your-room",
+    "📜-protocol-rules",
+    "📖-user-guide",
+    "🔒-admin-manual",
+    "👁️-control-panels",
+)
+
+
 async def build_layout(
     guild: discord.Guild,
-) -> None:
+    clean: bool = True,
+) -> SetupReport:
+    """Smart setup: reuses what exists, repairs it, removes duplicates
+    and creates only what is missing. One run per server at a time."""
+
+    lock = _SETUP_LOCKS.setdefault(
+        guild.id,
+        asyncio.Lock(),
+    )
+
+    if lock.locked():
+        raise RuntimeError(
+            "Setup is already running for this server."
+        )
+
+    async with lock:
+
+        SETUP_ACTIVE.add(guild.id)
+
+        try:
+            return await _apply_layout(
+                guild,
+                clean,
+            )
+
+        finally:
+            SETUP_ACTIVE.discard(guild.id)
+
+
+async def _apply_layout(
+    guild: discord.Guild,
+    clean: bool,
+) -> SetupReport:
 
     if not guild.me:
         raise RuntimeError("Bot member unavailable")
 
+    report = SetupReport()
+
     # roles + categories + channels + permissions all come from layout.py
-    roles = await sync_roles(guild)
-    ch = await build_structure(guild, roles)
+    roles = await sync_roles(
+        guild,
+        report,
+        clean,
+    )
+
+    ch = await build_structure(
+        guild,
+        roles,
+        bot.database,
+        report,
+        clean,
+    )
+
+    missing = [
+        name
+        for name in _PANEL_CHANNELS
+        if name not in ch
+    ]
+
+    if missing:
+        raise RuntimeError(
+            "Could not create: "
+            + ", ".join(missing)
+            + "\n"
+            + "\n".join(report.notes[:5])
+        )
 
     await ensure_panel(
         ch["⌁-arrival-terminal"],
@@ -1196,6 +1299,8 @@ async def build_layout(
         ),
         AutoModConfigView(bot.database),
     )
+
+    return report
 
 
 # ============================================================
@@ -1924,6 +2029,9 @@ async def on_guild_channel_create(
     channel: discord.abc.GuildChannel,
 ) -> None:
 
+    if channel.guild.id in SETUP_ACTIVE:
+        return
+
     await bot._log(
         channel.guild.id,
         "Channel Create",
@@ -1937,6 +2045,9 @@ async def on_guild_channel_create(
 async def on_guild_channel_delete(
     channel: discord.abc.GuildChannel,
 ) -> None:
+
+    if channel.guild.id in SETUP_ACTIVE:
+        return
 
     await bot._log(
         channel.guild.id,
@@ -3937,14 +4048,18 @@ async def reset_cmd(
 
 @bot.tree.command(
     name="setup",
-    description="Create or repair the Nexus server layout without deleting existing channels.",
+    description="Smart setup: reuses what exists, fixes it, removes duplicates, creates only what is missing.",
 )
 @app_commands.guild_only()
 @app_commands.default_permissions(
     administrator=True
 )
+@app_commands.describe(
+    clean="Delete duplicates and leftover channels inside Nexus sectors (default: yes)",
+)
 async def setup(
     interaction: discord.Interaction,
+    clean: bool = True,
 ) -> None:
 
     if not interaction.guild:
@@ -3989,13 +4104,23 @@ async def setup(
         thinking=True,
     )
 
-    await build_layout(
-        interaction.guild
-    )
+    try:
+
+        report = await build_layout(
+            interaction.guild,
+            clean,
+        )
+
+    except RuntimeError as exc:
+
+        return await interaction.followup.send(
+            f"⚠️ {exc}",
+            ephemeral=True,
+        )
 
     await interaction.followup.send(
-        "Nexus layout is ready. "
-        "All sectors, roles and channels deployed/repaired.",
+        "✅ **Nexus setup complete**\n\n"
+        + report.summary(),
         ephemeral=True,
     )
 
@@ -4541,12 +4666,22 @@ async def prefix_setup(
     ctx: commands.Context,
 ) -> None:
 
-    await build_layout(
-        ctx.guild
-    )
+    try:
+
+        report = await build_layout(
+            ctx.guild
+        )
+
+    except RuntimeError as exc:
+
+        return await ctx.reply(
+            f"⚠️ {exc}",
+            mention_author=False,
+        )
 
     await ctx.reply(
-        "Nexus repair complete.",
+        "✅ **Nexus setup complete**\n\n"
+        + report.summary(),
         mention_author=False,
     )
 
