@@ -34,6 +34,24 @@ Veteran / Operative / Recruit** (cosmetic level roles).
 Admin and Moderator always see everything. To change the server, edit the
 tables at the top of `layout.py` and run `/setup`.
 
+## Smart `/setup`
+
+`/setup` never builds blindly. It first reads what already exists, then:
+
+1. **Matches** existing categories (by `SECTOR NN`) and channels (by name
+   without emoji, so `⚡-arrival-terminal` and `⌁-arrival-terminal` are the same channel).
+2. **Repairs** what it found: fixes the name, moves it to the right sector,
+   resets permissions to the role matrix.
+3. **Removes** duplicates and leftover channels inside Nexus sectors, and
+   merges duplicate roles (members are moved to the kept role first).
+4. **Creates** only what is truly missing, so running it twice changes nothing.
+
+Never touched: open tickets (`ticket-*`), temporary voice rooms, and any
+channel outside the Nexus sectors that is not part of the layout.
+Use `/setup clean:False` to repair without deleting anything.
+When it finishes it prints exactly what it created, renamed, moved and deleted.
+Only one setup can run at a time per server.
+
 Level roles (Recruit 5, Operative 10, Veteran 20) are cosmetic and never open
 channels. Reaction roles and shop roles cannot hand out staff, Nexus or
 moderation-permission roles.
